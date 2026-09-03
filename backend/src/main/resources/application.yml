@@ -1,0 +1,25 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: resume-agent-backend
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    default-property-inclusion: non_null
+
+app:
+  storage-path: ./storage
+  ai-service-url: http://localhost:8000
+  latex-compiler: pdflatex
+  default-user-id: user_001
+
+logging:
+  level:
+    com.resumeagent: DEBUG
+    org.springframework.web: INFO

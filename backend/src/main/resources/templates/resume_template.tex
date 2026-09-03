@@ -1,0 +1,105 @@
+\documentclass[10pt, letterpaper]{article}
+
+% Packages:
+\usepackage[
+    ignoreheadfoot, 
+    top=1.5cm, 
+    bottom=1.5cm, 
+    left=1.5cm, 
+    right=1.5cm, 
+    footskip=1.0cm, 
+    % showframe % for debugging 
+]{geometry}
+\usepackage{titlesec}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{enumitem}
+\usepackage{fontawesome5}
+\usepackage{amsmath}
+\usepackage[
+    pdftitle={Resume},
+    pdfauthor={},
+    colorlinks=true,
+    urlcolor=blue,
+    linkcolor=black
+]{hyperref}
+\usepackage{bookmark}
+\usepackage{lastpage}
+\usepackage{fancyhdr}
+\usepackage{microtype}
+
+% Custom Colors
+\definecolor{primaryColor}{RGB}{0, 79, 144}
+\definecolor{textColor}{RGB}{30, 30, 30}
+\definecolor{mutedColor}{RGB}{100, 100, 100}
+
+% Font Configuration
+\usepackage{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+\color{textColor}
+
+% Sections formatting
+\titleformat{\section}{\Large\bfseries\color{primaryColor}}{}{0em}{}[\titlerule]
+\titlespacing*{\section}{0pt}{1.5ex plus 1ex minus .2ex}{1ex plus .2ex}
+
+% Custom commands
+\newcommand{\resumeItem}[1]{
+  \item\small{
+    {#1 \vspace{-2pt}}
+  }
+}
+
+\newcommand{\resumeSubheading}[4]{
+  \vspace{-2pt}\item
+    \begin{tabular*}{1.0\textwidth}[t]{l@{\extracolsep{\fill}}r}
+      \textbf{#1} & \textbf{\small #2} \\
+      \textit{\small#3} & \textit{\small #4} \\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeProjectHeading}[2]{
+    \item
+    \begin{tabular*}{1.0\textwidth}{l@{\extracolsep{\fill}}r}
+      \small#1 & \textbf{\small #2} \\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeSubItem}[1]{\resumeItem{#1}\vspace{-4pt}}
+\renewcommand\labelitemii{$\vcenter{\hbox{\tiny$\bullet$}}$}
+\newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0.0in, label={}]}
+\newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
+\newcommand{\resumeItemListStart}{\begin{itemize}[leftmargin=0.15in]}
+\newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-5pt}}
+
+\pagestyle{empty} % No headers/footers
+
+\begin{document}
+
+%----------HEADING----------
+\begin{center}
+    {\Huge \bfseries <<NAME>>} \\ \vspace{5pt}
+    <<LOCATION>> \\ \vspace{5pt}
+    \small \faPhone* <<PHONE>> ~ 
+    \href{mailto:<<EMAIL>>}{\faEnvelope~<<EMAIL>>} ~ 
+    <<LINKEDIN>>
+    <<GITHUB>>
+    <<PORTFOLIO>>
+\end{center}
+
+%-----------SUMMARY-----------
+<<SUMMARY_SECTION>>
+
+%-----------EXPERIENCE-----------
+<<EXPERIENCE_SECTION>>
+
+%-----------PROJECTS-----------
+<<PROJECTS_SECTION>>
+
+%-----------SKILLS-----------
+<<SKILLS_SECTION>>
+
+%-----------EDUCATION-----------
+<<EDUCATION_SECTION>>
+
+\end{document}

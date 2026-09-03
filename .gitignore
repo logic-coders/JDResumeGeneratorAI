@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+target/
+
+# Environment
+.env
+.env.local
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Build
+.next/
+out/
+dist/
+build/
+
+# Storage (runtime data)
+storage/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# LaTeX build files
+*.aux
+*.log
+*.out
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+
+# Maven wrapper
+.mvn/
+mvnw
+mvnw.cmd
