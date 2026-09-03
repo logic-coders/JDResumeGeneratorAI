@@ -68,6 +68,30 @@ public class ResumeController {
     }
 
     /**
+     * Generate custom resume for a job with SSE streaming progress
+     */
+    @GetMapping(value = "/stream-generate", produces = org.springframework.http.MediaType.TEXT_EVENT_STREAM_VALUE)
+    public org.springframework.web.servlet.mvc.method.annotation.SseEmitter streamGenerateResume(@RequestParam String jobUrl) {
+        String userId = userService.getDefaultUserId();
+        
+        org.springframework.web.servlet.mvc.method.annotation.SseEmitter emitter = new org.springframework.web.servlet.mvc.method.annotation.SseEmitter(300000L); // 5 min timeout
+        
+        new Thread(() -> {
+            try {
+                resumeService.generateCustomResumeStream(userId, jobUrl, emitter);
+            } catch (Exception e) {
+                log.error("Failed to generate resume stream", e);
+                try {
+                    emitter.send(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event().name("error").data(e.getMessage()));
+                    emitter.completeWithError(e);
+                } catch (Exception ex) {}
+            }
+        }).start();
+        
+        return emitter;
+    }
+
+    /**
      * Analyze master resume against a job
      */
     @PostMapping("/analyze")
@@ -93,6 +117,30 @@ public class ResumeController {
         } catch (Exception e) {
             log.error("Failed to improve resume", e);
             return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Download or preview a generated PDF
+     */
+    @GetMapping("/{resumeId}/pdf")
+    public ResponseEntity<org.springframework.core.io.Resource> getGeneratedResumePdf(@PathVariable String resumeId) {
+        String userId = userService.getDefaultUserId();
+        try {
+            java.nio.file.Path pdfPath = java.nio.file.Paths.get(
+                "./storage/users/" + userId + "/generated/" + resumeId + "/resume.pdf"
+            );
+            if (!java.nio.file.Files.exists(pdfPath)) {
+                return ResponseEntity.notFound().build();
+            }
+            org.springframework.core.io.Resource resource = new org.springframework.core.io.UrlResource(pdfPath.toUri());
+            return ResponseEntity.ok()
+                    .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + resumeId + ".pdf\"")
+                    .contentType(org.springframework.http.MediaType.APPLICATION_PDF)
+                    .body(resource);
+        } catch (Exception e) {
+            log.error("Failed to load PDF", e);
+            return ResponseEntity.internalServerError().build();
         }
     }
 }

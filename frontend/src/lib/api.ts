@@ -134,6 +134,10 @@ export async function generateCustomResume(jobUrl: string): Promise<Record<strin
   });
 }
 
+export function getGenerateResumeStreamUrl(jobUrl: string): string {
+  return `${API_BASE}/api/resumes/stream-generate?jobUrl=${encodeURIComponent(jobUrl)}`;
+}
+
 export async function improveResume(focusArea: string = "overall"): Promise<Record<string, any>> {
   return apiFetch('/api/resumes/improve', {
     method: 'POST',

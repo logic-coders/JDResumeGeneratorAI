@@ -7,7 +7,7 @@ import SlashCommandMenu from './SlashCommandMenu';
 import * as api from '../lib/api';
 
 export default function ChatInput() {
-  const { sendMessage, isTyping } = useChat();
+  const { sendMessage, isTyping, setProcessingState } = useChat();
   const [message, setMessage] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -105,6 +105,7 @@ export default function ChatInput() {
     // If there's a file, upload it first
     if (file) {
       setIsUploading(true);
+      setProcessingState("Uploading and analyzing your master resume... This may take up to a minute.");
       try {
         const result = await api.uploadResume(file);
         attachmentPath = result.originalPath as string;
@@ -115,9 +116,11 @@ export default function ChatInput() {
         console.error('File upload failed:', error);
         alert('Failed to upload file. Please try again.');
         setIsUploading(false);
+        setProcessingState(null);
         return;
       }
       setIsUploading(false);
+      setProcessingState(null);
       setFile(null);
     }
 

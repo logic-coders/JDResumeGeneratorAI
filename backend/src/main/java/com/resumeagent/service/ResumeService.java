@@ -65,6 +65,21 @@ public class ResumeService {
 
         if (parseResponse != null && parseResponse.getData() != null) {
             result.put("parsedResume", parseResponse.getData());
+            try {
+                java.util.Map<String, Object> data = (java.util.Map<String, Object>) parseResponse.getData();
+                if (data.containsKey("parsedResume")) {
+                    com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                    Resume parsed = mapper.convertValue(data.get("parsedResume"), Resume.class);
+                    saveMasterResume(userId, parsed);
+                } else if (data.containsKey("personalInfo")) {
+                    // Fallback in case it's returned directly
+                    com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                    Resume parsed = mapper.convertValue(data, Resume.class);
+                    saveMasterResume(userId, parsed);
+                }
+            } catch (Exception e) {
+                log.error("Failed to save master resume during upload: {}", e.getMessage());
+            }
         }
 
         return result;
@@ -168,6 +183,56 @@ public class ResumeService {
         result.put("resumeId", "job_" + jobId);
         result.put("resume", optimizedResume);
         return result;
+    }
+
+    public void generateCustomResumeStream(String userId, String jobUrl, org.springframework.web.servlet.mvc.method.annotation.SseEmitter emitter) throws IOException {
+        try {
+            Resume masterResume = getMasterResume(userId).orElseThrow(() -> new RuntimeException("Master resume not found"));
+            
+            emitter.send(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event().data(Map.of("type", "log", "progress", 10, "message", "Fetching and parsing job description from " + jobUrl)));
+            
+            // 1. Fetch and parse job
+            org.jsoup.nodes.Document doc = org.jsoup.Jsoup.connect(jobUrl).get();
+            String jobText = doc.body().text();
+            
+            emitter.send(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event().data(Map.of("type", "log", "progress", 25, "message", "Found JD. Sending to AI for structured parsing...")));
+            AiServiceResponse jobResponse = aiServiceClient.parseJob(jobText).block();
+            Object jobData = jobResponse.getData().get("parsedJob");
+            
+            // 2. Match
+            emitter.send(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event().data(Map.of("type", "log", "progress", 40, "message", "Analyzing master resume against job requirements...")));
+            AiServiceResponse matchResponse = aiServiceClient.matchResume(masterResume, jobData).block();
+            Object matchReport = matchResponse.getData().get("matchReport");
+            
+            // 3. Optimize
+            emitter.send(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event().data(Map.of("type", "log", "progress", 60, "message", "Optimizing resume. Injecting JD-specific skills and tailoring summary...")));
+            AiServiceResponse optimizeResponse = aiServiceClient.optimizeResume(masterResume, jobData, matchReport).block();
+            Resume optimizedResume = new com.fasterxml.jackson.databind.ObjectMapper().convertValue(
+                optimizeResponse.getData().get("optimizedResume"), Resume.class);
+                
+            // 4. Generate PDF
+            emitter.send(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event().data(Map.of("type", "log", "progress", 85, "message", "Compiling LaTeX template into PDF format...")));
+            String jobId = java.util.UUID.randomUUID().toString().substring(0, 8);
+            String outputDir = storageService.getGeneratedDir(userId) + "/job_" + jobId;
+            storageService.writeJson(outputDir + "/resume.json", optimizedResume);
+            
+            String texContent = latexTemplateRenderer.render(optimizedResume);
+            pdfCompiler.compile(texContent, outputDir, "resume");
+            
+            Map<String, Object> result = new HashMap<>();
+            result.put("resumeId", "job_" + jobId);
+            result.put("resume", optimizedResume);
+            
+            emitter.send(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event().data(Map.of("type", "log", "progress", 100, "message", "Generation complete!")));
+            emitter.send(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event().data(Map.of("type", "result", "data", result)));
+            emitter.complete();
+        } catch (Exception e) {
+            log.error("Streaming generation failed", e);
+            try {
+                emitter.send(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event().data(Map.of("type", "error", "message", e.getMessage())));
+                emitter.completeWithError(e);
+            } catch (Exception ex) {}
+        }
     }
 
     public Object improveResume(String userId, String focusArea) {

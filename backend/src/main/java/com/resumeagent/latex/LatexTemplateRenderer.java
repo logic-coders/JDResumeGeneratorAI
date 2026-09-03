@@ -35,8 +35,11 @@ public class LatexTemplateRenderer {
 
         // Basic Info
         if (resume.getPersonalInfo() != null) {
-            tex = tex.replace("<<NAME>>", escapeLatex(resume.getPersonalInfo().getName()));
-            tex = tex.replace("<<LOCATION>>", escapeLatex(resume.getPersonalInfo().getLocation()));
+            String name = resume.getPersonalInfo().getName();
+            tex = tex.replace("<<NAME>>", (name == null || name.isBlank()) ? "~" : escapeLatex(name));
+            String loc = resume.getPersonalInfo().getLocation();
+            tex = tex.replace("<<LOCATION>>", (loc == null || loc.isBlank()) ? "~" : escapeLatex(loc));
+            
             tex = tex.replace("<<PHONE>>", escapeLatex(resume.getPersonalInfo().getPhone()));
             tex = tex.replace("<<EMAIL>>", escapeLatex(resume.getPersonalInfo().getEmail()));
 
@@ -45,7 +48,7 @@ public class LatexTemplateRenderer {
             tex = tex.replace("<<GITHUB>>", formatLink(resume.getPersonalInfo().getGithub(), "GitHub", "\\faGithub"));
             tex = tex.replace("<<PORTFOLIO>>", formatLink(resume.getPersonalInfo().getPortfolio(), "Portfolio", "\\faGlobe"));
         } else {
-            tex = tex.replace("<<NAME>>", "").replace("<<LOCATION>>", "").replace("<<PHONE>>", "").replace("<<EMAIL>>", "");
+            tex = tex.replace("<<NAME>>", "~").replace("<<LOCATION>>", "~").replace("<<PHONE>>", "").replace("<<EMAIL>>", "");
             tex = tex.replace("<<LINKEDIN>>", "").replace("<<GITHUB>>", "").replace("<<PORTFOLIO>>", "");
         }
 

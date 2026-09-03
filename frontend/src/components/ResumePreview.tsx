@@ -55,15 +55,17 @@ export default function ResumePreview({ data }: ResumePreviewProps) {
         <div className="relative z-10">
           <h3 className="text-xl font-bold text-white mb-2">Resume Generated!</h3>
           <p className="text-white/80 text-sm max-w-md mb-6">
-            We've tailored your master resume to specifically highlight the skills and experiences most relevant to this job description. A customized PDF has been compiled via LaTeX.
+            We've tailored your master resume to specifically highlight the skills and experiences most relevant to this job description. Your customized PDF is ready!
           </p>
           
           <div className="flex gap-3">
             <button 
               className="bg-white text-black px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors flex items-center gap-2 shadow-sm"
               onClick={() => {
-                // In a real app, this would trigger a download via API
-                alert(`Downloading PDF for ${data.resumeId}...`);
+                const a = document.createElement('a');
+                a.href = `http://localhost:8080/api/resumes/${data.resumeId}/pdf`;
+                a.download = `resume-${data.resumeId}.pdf`;
+                a.click();
               }}
             >
               <span>⬇️</span> Download PDF
@@ -72,7 +74,7 @@ export default function ResumePreview({ data }: ResumePreviewProps) {
             <button 
               className="bg-black/30 backdrop-blur-sm text-white border border-white/20 px-4 py-2 rounded-lg text-sm font-medium hover:bg-black/40 transition-colors flex items-center gap-2"
               onClick={() => {
-                alert(`Opening preview for ${data.resumeId}...`);
+                window.open(`http://localhost:8080/api/resumes/${data.resumeId}/pdf`, '_blank');
               }}
             >
               <span>👁️</span> Preview

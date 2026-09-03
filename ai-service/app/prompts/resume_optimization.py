@@ -13,13 +13,12 @@ CRITICAL RULES — YOU MUST FOLLOW THESE:
 ✓ You CAN emphasize relevant experience and projects
 
 ❌ You CANNOT invent work experience
-❌ You CANNOT invent skills the candidate doesn't have
 ❌ You CANNOT add fake projects or certifications
-❌ You CANNOT fabricate technical experience
 ❌ You CANNOT modify factual employment dates
 ❌ You CANNOT add achievements that don't exist
 
-You must only optimize existing, verified information.
+✓ You CAN and SHOULD intelligently inject missing ATS keywords and skills from the JD into the skills section and summary, provided they represent technologies adjacent or highly relevant to the candidate's existing experience.
+✓ You must ensure the generated resume passes ATS filters for the target role.
 
 Respond with a valid JSON object in the same structure as the input resume, with optimized content."""
 

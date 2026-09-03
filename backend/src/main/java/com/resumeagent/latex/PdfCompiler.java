@@ -33,14 +33,10 @@ public class PdfCompiler {
             Path texFilePath = workDir.resolve(outputFileName + ".tex");
             Files.writeString(texFilePath, texContent);
 
-            // Execute pdflatex
-            // pdflatex -interaction=nonstopmode -output-directory=outputDir texFile
+            // Execute tectonic
             ProcessBuilder pb = new ProcessBuilder(
-                    "pdflatex",
-                    "-interaction=nonstopmode",
-                    "-halt-on-error",
-                    "-output-directory=" + outputDirectory,
-                    texFilePath.toString()
+                    "tectonic",
+                    outputFileName + ".tex"
             );
             
             pb.directory(workDir.toFile());

@@ -6,9 +6,10 @@ import { useChat } from '../context/ChatContext';
 import WelcomeScreen from './WelcomeScreen';
 import MatchReport from './MatchReport';
 import ResumePreview from './ResumePreview';
+import GenerationEngineUI from './GenerationEngineUI';
 
 export default function ChatWindow() {
-  const { messages, isTyping, processingState } = useChat();
+  const { messages, isTyping, processingState, engineState } = useChat();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -49,7 +50,7 @@ export default function ChatWindow() {
               </div>
 
               {/* Message Bubble */}
-              <div className={`p-4 rounded-2xl overflow-hidden break-words max-w-full ${
+              <div className={`p-4 rounded-2xl overflow-hidden break-words break-all max-w-full min-w-0 ${
                 isUser 
                   ? 'bg-[var(--color-secondary)] border border-[var(--color-panel-border)] text-[var(--color-foreground)] rounded-br-none' 
                   : 'glass-card text-[var(--color-foreground)] rounded-bl-none'
@@ -57,7 +58,7 @@ export default function ChatWindow() {
                 {msg.role === 'SYSTEM' ? (
                   <div className="text-red-400 text-sm font-medium">{msg.content}</div>
                 ) : (
-                  <div className="prose prose-invert prose-sm md:prose-base max-w-none break-words">
+                  <div className="prose prose-invert prose-sm md:prose-base max-w-full min-w-0 break-words break-all overflow-x-hidden">
                     <ReactMarkdown>{msg.content}</ReactMarkdown>
                   </div>
                 )}
@@ -94,8 +95,18 @@ export default function ChatWindow() {
         </div>
       )}
       
-      {/* Processing State Indicator */}
-      {processingState && (
+      {/* Engine State Indicator (For Streaming Tasks) */}
+      {engineState && engineState.active && (
+        <GenerationEngineUI 
+          progress={engineState.progress}
+          status={engineState.status}
+          logs={engineState.logs}
+          startTime={engineState.startTime}
+        />
+      )}
+      
+      {/* Processing State Indicator (For Simple Async Tasks) */}
+      {processingState && !engineState?.active && (
         <div className="flex justify-start animate-fade-in">
           <div className="flex max-w-[85%] md:max-w-[75%] flex-row gap-3">
             <div className="shrink-0 flex items-end">

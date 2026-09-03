@@ -80,19 +80,19 @@ export default function SlashCommandMenu({ query, onSelect, onClose, position }:
   return (
     <div 
       ref={menuRef}
-      className="fixed z-50 bg-secondary rounded-lg shadow-2xl border border-panel-border overflow-hidden w-72 max-h-80 flex flex-col animate-fade-in"
+      className="fixed z-50 bg-[#0f1115] rounded-lg shadow-2xl border border-[var(--color-panel-border)] overflow-hidden w-72 max-h-80 flex flex-col animate-fade-in"
       style={{
         bottom: `${position.bottom}px`,
         left: `${position.left}px`,
       }}
     >
-      <div className="p-2 border-b border-panel-border bg-panel text-xs text-muted-foreground font-medium">
+      <div className="p-2 border-b border-[var(--color-panel-border)] bg-[#1e293b] text-xs text-[var(--color-muted-foreground)] font-medium">
         Commands
       </div>
       <div className="overflow-y-auto p-1 flex-1">
         {Object.entries(groupedCommands).map(([category, cmds]) => (
           <div key={category} className="mb-2 last:mb-0">
-            <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mt-1">
+            <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-[var(--color-muted-foreground)] font-semibold mt-1">
               {category}
             </div>
             {cmds.map((cmd) => {
@@ -104,8 +104,8 @@ export default function SlashCommandMenu({ query, onSelect, onClose, position }:
                   key={cmd.command}
                   className={`w-full text-left px-3 py-2 rounded-md flex items-center gap-3 transition-colors ${
                     isSelected 
-                      ? 'bg-primary text-white' 
-                      : 'hover:bg-secondary text-foreground'
+                      ? 'bg-[var(--color-primary)] text-white' 
+                      : 'hover:bg-[#1e293b] text-[var(--color-foreground)]'
                   }`}
                   onClick={() => onSelect(cmd.command)}
                   onMouseEnter={() => setSelectedIndex(currentIndex)}
