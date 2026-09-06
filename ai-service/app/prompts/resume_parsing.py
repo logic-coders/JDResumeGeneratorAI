@@ -62,7 +62,10 @@ Rules:
 3. If a field is not present, use an empty string "" or empty array [].
 4. For skills, categorize them appropriately into languages, frameworks, databases, cloud, and tools.
 5. For dates, use the format as written in the resume (e.g., "Jan 2023", "2023 - Present").
-6. Respond with ONLY the JSON object, no additional text."""
+6. Do NOT infer or assume skills that are not explicitly mentioned. For example, if the resume mentions "Spring Boot" but not "Java", do NOT add "Java" unless it is explicitly stated.
+7. Do NOT embellish or improve bullet points — extract them exactly as written.
+8. If the resume text is garbled or unclear, mark those fields as empty rather than guessing.
+9. Respond with ONLY the JSON object, no additional text."""
 
 RESUME_PARSING_USER = """Parse the following resume text into structured JSON:
 

@@ -34,8 +34,9 @@ public class PdfCompiler {
             Files.writeString(texFilePath, texContent);
 
             // Execute tectonic
+            String tectonicCmd = findTectonicExecutable();
             ProcessBuilder pb = new ProcessBuilder(
-                    "tectonic",
+                    tectonicCmd,
                     outputFileName + ".tex"
             );
             
@@ -81,5 +82,22 @@ public class PdfCompiler {
             log.error("Exception during PDF compilation", e);
             return false;
         }
+    }
+
+    /**
+     * Locate the tectonic binary across standard macOS/Linux paths.
+     */
+    private String findTectonicExecutable() {
+        String[] candidatePaths = {
+            "/opt/homebrew/bin/tectonic",
+            "/usr/local/bin/tectonic",
+            "/usr/bin/tectonic"
+        };
+        for (String path : candidatePaths) {
+            if (Files.exists(Path.of(path)) && Files.isExecutable(Path.of(path))) {
+                return path;
+            }
+        }
+        return "tectonic";
     }
 }

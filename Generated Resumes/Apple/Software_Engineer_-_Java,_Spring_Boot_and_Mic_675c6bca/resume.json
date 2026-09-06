@@ -1,0 +1,49 @@
+{
+  "personalInfo" : {
+    "name" : "Chandan Kumar Singh",
+    "email" : "cs.sde07@gmail.com",
+    "phone" : "+91-6200952129",
+    "location" : "",
+    "linkedin" : "LinkedIn",
+    "github" : "GitHub",
+    "leetcode" : "LeetCode"
+  },
+  "summary" : "Software Engineer with 1+ year of experience building scalable, low‑latency microservices using Java, Spring Boot, Kafka, and AWS; delivered 40% latency reduction and 60% overhead cut through high‑ownership engineering. Proven track record designing production‑grade APIs, securing distributed systems, and automating workflows. Strong DSA background (1000+ problems solved, CodeChef Global Rank 14).",
+  "skills" : {
+    "languages" : [ "Java", "Python", "C++", "SQL", "JavaScript", "TypeScript" ],
+    "frameworks" : [ "Spring Boot", "Spring Security", "Hibernate", "Microservices", "gRPC", "Kafka", "REST API", "FastAPI", "React.js" ],
+    "databases" : [ "MySQL", "PostgreSQL", "Redis", "FAISS", "ChromaDB" ],
+    "cloud" : [ "AWS (EC2, S3)", "Docker", "Kubernetes", "Jenkins" ],
+    "tools" : [ "Git", "GitHub", "SVN", "Jenkins", "Docker", "Kubernetes", "NumPy", "Pandas", "Scikit-learn", "HuggingFace", "Transformers", "LangChain" ],
+    "methodologies" : [ "Agile", "CI/CD", "DevOps" ]
+  },
+  "experience" : [ {
+    "company" : "Tata Consultancy Services",
+    "title" : "Software Engineer — Java, Spring Boot, Microservices",
+    "location" : "",
+    "startDate" : "Jan 2025",
+    "endDate" : "Present",
+    "bullets" : [ "Designed and owned RESTful APIs for business‑critical banking workflows, cutting average response latency by 40% and boosting platform scalability by 50% through service‑level optimizations and efficient resource utilization.", "Architected a centralized API Gateway with secret‑key authentication and JWT token‑reuse strategy, reducing inter‑service overhead by 60% and enhancing distributed system reliability and security.", "Engineered secure integrations with external banking systems using AES‑256 encryption and defensive patterns against MITM, replay, and request‑tampering attacks, achieving zero security incidents in production.", "Owned end‑to‑end delivery of internal automation solutions, eliminating ~64% of manual operational effort and accelerating team release velocity via CI/CD pipelines.", "Engineered a high‑throughput bulk‑upload pipeline for concurrent ingestion of thousands of records per request, increasing system throughput by 35% while maintaining strict data consistency." ]
+  } ],
+  "projects" : [ {
+    "name" : "Clothify Shopping Application",
+    "technologies" : "Java, Spring Boot, Hibernate, PostgreSQL, React.js, gRPC, Kafka, Docker, Kubernetes, AWS",
+    "url" : "GitHub",
+    "bullets" : [ "Built a scalable e‑commerce backend using Java, Spring Boot, Hibernate, PostgreSQL, React.js, gRPC, Kafka, Docker, Kubernetes, and AWS; implemented API Gateway routing, Eureka service discovery, and domain‑driven microservices architecture.", "Engineered low‑latency gRPC + Kafka‑based asynchronous communication with JWT security; containerized services and deployed on Kubernetes (AWS EC2) via Jenkins CI/CD, supporting 100+ concurrent users and reducing latency by 30%." ]
+  }, {
+    "name" : "QuantPulse AI",
+    "technologies" : "Python, Java, Spring Boot, FastAPI, React.js, XGBoost, Random Forest, FinBERT, PostgreSQL, Redis, WebSockets",
+    "url" : "GitHub",
+    "bullets" : [ "Developed an ensemble ML engine combining XGBoost, Random Forest, and Logistic Regression on 60+ technical indicators with FinBERT‑based news sentiment, improving prediction accuracy over single‑model baselines.", "Architected a real‑time streaming stack (Spring Boot + FastAPI + React + WebSocket) with Redis caching and resilient Groww API integration using exponential backoff, enabling tick‑by‑tick market data ingestion." ]
+  } ],
+  "education" : [ {
+    "institution" : "Motihari College of Engineering, Motihari",
+    "degree" : "B.Tech",
+    "field" : "Computer Science and Engineering (CSE)",
+    "startDate" : "Oct 2020",
+    "endDate" : "Aug 2024",
+    "gpa" : "9.0 / 10"
+  } ],
+  "certifications" : [ ],
+  "achievements" : [ "Solved 1000+ algorithmic problems across LeetCode and GeeksForGeeks; strong depth in Graphs, Trees, Dynamic Programming, Greedy, and Backtracking.", "Global Rank 14 in CodeChef Starters 67 among 10,000+ participants — top 0.014% globally.", "Founded and scaled ZERO ONE Coding Club to 1,000+ active members, mentoring in competitive programming and system design." ]
+}

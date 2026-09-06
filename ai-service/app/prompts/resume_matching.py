@@ -29,7 +29,15 @@ Evaluation Areas:
 - Seniority Level
 - Education Requirements
 
-Be honest and fair in your assessment. Respond with ONLY the JSON object."""
+CRITICAL GUARDRAILS:
+1. Be HONEST and FAIR — do NOT inflate the match score to make the user feel good.
+2. A skill is a "strong match" ONLY if the resume explicitly demonstrates it with evidence.
+3. A skill is "partial" ONLY if the resume shows related but not identical experience.
+4. A skill is "missing" if there is NO evidence of it in the resume — do NOT assume or fabricate.
+5. Do NOT add any skill to strongMatches or partialMatches that is not evidenced in the resume.
+6. Recommendations should be honest and actionable — flag real gaps, don't sugarcoat.
+
+Respond with ONLY the JSON object."""
 
 RESUME_MATCHING_USER = """Compare this resume against the job description:
 

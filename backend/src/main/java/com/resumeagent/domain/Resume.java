@@ -1,5 +1,6 @@
 package com.resumeagent.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,6 +19,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Resume {
 
     private PersonalInfo personalInfo;
@@ -43,6 +45,7 @@ public class Resume {
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class PersonalInfo {
         private String name;
         private String email;
@@ -58,6 +61,7 @@ public class Resume {
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Skills {
         @Builder.Default
         private List<String> languages = new ArrayList<>();
@@ -69,12 +73,15 @@ public class Resume {
         private List<String> cloud = new ArrayList<>();
         @Builder.Default
         private List<String> tools = new ArrayList<>();
+        @Builder.Default
+        private List<String> methodologies = new ArrayList<>();
     }
 
     @Data
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Experience {
         private String company;
         private String title;
@@ -89,6 +96,7 @@ public class Resume {
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Project {
         private String name;
         private String technologies;
@@ -101,6 +109,7 @@ public class Resume {
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Education {
         private String institution;
         private String degree;

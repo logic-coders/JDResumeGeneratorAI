@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useChat } from '../context/ChatContext';
 import { 
   MessageSquare, 
@@ -9,10 +9,29 @@ import {
   Settings, 
   Trash2,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Folder
 } from 'lucide-react';
+import GeneratedResumesModal from './GeneratedResumesModal';
+import * as api from '../lib/api';
 
 export default function Sidebar() {
+  const [isGeneratedModalOpen, setIsGeneratedModalOpen] = useState(false);
+  const [generatedCount, setGeneratedCount] = useState<number>(0);
+
+  const fetchGeneratedCount = async () => {
+    try {
+      const list = await api.getGeneratedResumes();
+      setGeneratedCount(list ? list.length : 0);
+    } catch (e) {}
+  };
+
+  useEffect(() => {
+    fetchGeneratedCount();
+    const interval = setInterval(fetchGeneratedCount, 8000);
+    return () => clearInterval(interval);
+  }, []);
+
   const { 
     conversations, 
     activeConversation, 
@@ -69,7 +88,21 @@ export default function Sidebar() {
             className="w-full flex items-center gap-2 p-2 rounded-md hover:bg-[var(--color-secondary)] transition-colors text-sm text-left"
           >
             <FileText size={16} className="text-yellow-500" />
-            Master Resume
+            <span>Master Resume</span>
+          </button>
+          <button 
+            onClick={() => setIsGeneratedModalOpen(true)}
+            className="w-full flex items-center justify-between p-2 rounded-md hover:bg-[var(--color-secondary)] transition-colors text-sm text-left group mt-1"
+          >
+            <div className="flex items-center gap-2">
+              <Folder size={16} className="text-blue-400" />
+              <span>Generated Resumes</span>
+            </div>
+            {generatedCount > 0 && (
+              <span className="text-[11px] px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 font-medium group-hover:bg-blue-500/30">
+                {generatedCount}
+              </span>
+            )}
           </button>
         </div>
 
@@ -117,6 +150,15 @@ export default function Sidebar() {
           Settings
         </button>
       </div>
+
+      <GeneratedResumesModal 
+        isOpen={isGeneratedModalOpen} 
+        onClose={() => {
+          setIsGeneratedModalOpen(false);
+          fetchGeneratedCount();
+        }}
+        onCountChange={fetchGeneratedCount}
+      />
     </div>
   );
 }

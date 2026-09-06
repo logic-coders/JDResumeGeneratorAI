@@ -10,6 +10,7 @@ from app.llm.provider import LLMProvider
 from app.models.schemas import (
     ChatRequest, ChatResponse, OnboardingStage, OnboardingStatus,
 )
+from app.validators import validate_field
 
 logger = logging.getLogger(__name__)
 
@@ -270,6 +271,14 @@ class OnboardingAgent:
                 agent_type="onboarding",
             )
 
+        # Validate the field value
+        is_valid, error_msg = validate_field(field_name, message)
+        if not is_valid:
+            return ChatResponse(
+                response=f"⚠️ {error_msg}\n\n{question}",
+                agent_type="onboarding",
+            )
+
         # Save the field value and ask for the next one
         profile_dict[field_name] = message
 
@@ -354,6 +363,14 @@ class OnboardingAgent:
             )
 
         field_name, question, required = current_field
+
+        # Validate URL fields
+        is_valid, error_msg = validate_field(field_name, message)
+        if not is_valid:
+            return ChatResponse(
+                response=f"⚠️ {error_msg}\n\n{question}",
+                agent_type="onboarding",
+            )
 
         # Save the current field
         profile_dict[field_name] = message

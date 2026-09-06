@@ -8,7 +8,11 @@ class Settings(BaseSettings):
     # NVIDIA NIM Configuration
     nvidia_api_key: str = ""
     nvidia_base_url: str = "https://integrate.api.nvidia.com/v1"
-    nvidia_model: str = "meta/llama-3.1-70b-instruct"
+    nvidia_model: str = "nvidia/nemotron-3-super-120b-a12b"
+
+    # LLM Resilience
+    llm_timeout: int = 60  # seconds per LLM call
+    llm_max_retries: int = 3  # max retry attempts for transient failures
 
     # Application
     app_env: str = "local"

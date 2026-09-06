@@ -142,6 +142,9 @@ public class LatexTemplateRenderer {
         if (skills.getTools() != null && !skills.getTools().isEmpty()) {
             sb.append("    \\textbf{Tools}{: ").append(escapeLatex(String.join(", ", skills.getTools()))).append("} \\\\\n");
         }
+        if (skills.getMethodologies() != null && !skills.getMethodologies().isEmpty()) {
+            sb.append("    \\textbf{Methodologies}{: ").append(escapeLatex(String.join(", ", skills.getMethodologies()))).append("} \\\\\n");
+        }
         
         sb.append("  }}\n\\end{itemize}\n");
         return sb.toString();

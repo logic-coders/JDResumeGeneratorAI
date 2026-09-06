@@ -9,6 +9,7 @@ import type {
   UserProfile,
   OnboardingState,
   Resume,
+  GeneratedResumeItem,
 } from './types';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
@@ -114,10 +115,22 @@ export async function getMasterResume(): Promise<Resume | null> {
   }
 }
 
-export async function getGeneratedResumes(): Promise<
-  Array<{ id: string; name: string; hasPdf: string }>
-> {
+export async function getGeneratedResumes(): Promise<GeneratedResumeItem[]> {
   return apiFetch('/api/resumes/generated');
+}
+
+export function getResumePdfUrl(resumeId: string): string {
+  return `${API_BASE}/api/resumes/download/pdf?id=${encodeURIComponent(resumeId)}`;
+}
+
+export function getResumeTexUrl(resumeId: string): string {
+  return `${API_BASE}/api/resumes/download/tex?id=${encodeURIComponent(resumeId)}`;
+}
+
+export async function deleteGeneratedResume(resumeId: string): Promise<{ status: string; message: string; resumeId: string }> {
+  return apiFetch(`/api/resumes/generated/${encodeURIComponent(resumeId)}`, {
+    method: 'DELETE',
+  });
 }
 
 export async function analyzeResume(jobUrl: string): Promise<Record<string, any>> {

@@ -186,3 +186,24 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   { command: '/help', description: 'Show available commands', category: 'utility' },
   { command: '/cancel', description: 'Cancel current workflow', category: 'utility' },
 ];
+
+// ─── Generated Resume ────────────────────────────────────────────
+
+export interface GeneratedResumeItem {
+  resumeId: string;
+  company: string;
+  jobTitle: string;
+  jobId: string;
+  jobUrl?: string;
+  folderPath: string;
+  hasPdf: boolean;
+  hasTex: boolean;
+  hasJson: boolean;
+  generatedAt?: string;
+  updatedAt?: string;
+  version?: number;
+  matchScore?: number;
+  name?: string;
+  id?: string;
+}
+

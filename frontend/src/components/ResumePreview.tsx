@@ -3,6 +3,11 @@ import React from 'react';
 interface ResumePreviewProps {
   data: {
     resumeId?: string;
+    company?: string;
+    jobTitle?: string;
+    jobId?: string;
+    folderPath?: string;
+    version?: number;
     resume?: any;
     improvements?: any;
   };
@@ -44,6 +49,10 @@ export default function ResumePreview({ data }: ResumePreviewProps) {
     );
   }
 
+  const resumeId = data.resumeId || '';
+  const pdfUrl = `http://localhost:8080/api/resumes/download/pdf?id=${encodeURIComponent(resumeId)}`;
+  const texUrl = `http://localhost:8080/api/resumes/download/tex?id=${encodeURIComponent(resumeId)}`;
+
   // It's a generated custom resume
   return (
     <div className="w-full mt-4 space-y-4 font-sans">
@@ -53,32 +62,63 @@ export default function ResumePreview({ data }: ResumePreviewProps) {
         </div>
         
         <div className="relative z-10">
-          <h3 className="text-xl font-bold text-white mb-2">Resume Generated!</h3>
-          <p className="text-white/80 text-sm max-w-md mb-6">
-            We've tailored your master resume to specifically highlight the skills and experiences most relevant to this job description. Your customized PDF is ready!
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
+            <h3 className="text-xl font-bold text-white">Resume Generated!</h3>
+            {data.company && (
+              <span className="text-xs px-2.5 py-0.5 rounded-full bg-white/20 text-white font-medium backdrop-blur-sm">
+                🏢 {data.company}
+              </span>
+            )}
+            {data.version && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/30 text-emerald-200 font-medium">
+                Latest (v{data.version})
+              </span>
+            )}
+          </div>
+
+          {data.jobTitle && (
+            <p className="text-white/95 text-sm font-semibold mb-1">
+              {data.jobTitle}
+            </p>
+          )}
+
+          <p className="text-white/80 text-sm max-w-md mb-3">
+            We've tailored your master resume to highlight the requirements and skills for this role.
           </p>
+
+          {data.folderPath && (
+            <div className="mb-4 bg-black/25 backdrop-blur-sm border border-white/15 px-3 py-1.5 rounded-lg text-xs font-mono text-blue-100 flex items-center gap-2 max-w-lg truncate">
+              <span>📂</span>
+              <span className="truncate">Saved to: {data.folderPath}</span>
+            </div>
+          )}
           
-          <div className="flex gap-3">
-            <button 
+          <div className="flex gap-3 flex-wrap">
+            <a 
+              href={pdfUrl}
+              download={`${data.company || 'Company'}_Resume.pdf`}
               className="bg-white text-black px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors flex items-center gap-2 shadow-sm"
-              onClick={() => {
-                const a = document.createElement('a');
-                a.href = `http://localhost:8080/api/resumes/${data.resumeId}/pdf`;
-                a.download = `resume-${data.resumeId}.pdf`;
-                a.click();
-              }}
             >
               <span>⬇️</span> Download PDF
-            </button>
+            </a>
             
             <button 
               className="bg-black/30 backdrop-blur-sm text-white border border-white/20 px-4 py-2 rounded-lg text-sm font-medium hover:bg-black/40 transition-colors flex items-center gap-2"
               onClick={() => {
-                window.open(`http://localhost:8080/api/resumes/${data.resumeId}/pdf`, '_blank');
+                window.open(pdfUrl, '_blank');
               }}
             >
               <span>👁️</span> Preview
             </button>
+
+            <a
+              href={texUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="bg-black/20 backdrop-blur-sm text-white/90 border border-white/15 px-3 py-2 rounded-lg text-sm font-medium hover:bg-black/30 transition-colors flex items-center gap-2"
+            >
+              <span>📄</span> LaTeX
+            </a>
           </div>
         </div>
       </div>
