@@ -20,27 +20,30 @@ public class PdfCompiler {
 
     /**
      * Compiles the given TeX string into a PDF and saves it to outputFilePath.
+     * Uses a per-request temp directory to prevent concurrent compilation collisions.
      * Returns true if successful.
      */
     public boolean compile(String texContent, String outputDirectory, String outputFileName) {
-        Path workDir = Paths.get(outputDirectory);
+        Path outputDir = Paths.get(outputDirectory);
+        Path tempDir = null;
         try {
-            if (!Files.exists(workDir)) {
-                Files.createDirectories(workDir);
+            if (!Files.exists(outputDir)) {
+                Files.createDirectories(outputDir);
             }
 
-            // Write the .tex file
-            Path texFilePath = workDir.resolve(outputFileName + ".tex");
+            // Create an isolated temp directory for this compilation
+            tempDir = Files.createTempDirectory("latex_compile_");
+            Path texFilePath = tempDir.resolve(outputFileName + ".tex");
             Files.writeString(texFilePath, texContent);
 
-            // Execute tectonic
+            // Execute tectonic in the temp directory
             String tectonicCmd = findTectonicExecutable();
             ProcessBuilder pb = new ProcessBuilder(
                     tectonicCmd,
                     outputFileName + ".tex"
             );
             
-            pb.directory(workDir.toFile());
+            pb.directory(tempDir.toFile());
             pb.redirectErrorStream(true);
             
             Process process = pb.start();
@@ -68,19 +71,37 @@ public class PdfCompiler {
                 log.error("pdflatex output: \n{}", output);
                 return false;
             }
+
+            // Copy the compiled PDF from temp dir to the actual output directory
+            Path compiledPdf = tempDir.resolve(outputFileName + ".pdf");
+            Path targetPdf = outputDir.resolve(outputFileName + ".pdf");
+            if (Files.exists(compiledPdf)) {
+                Files.copy(compiledPdf, targetPdf, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            }
+
+            // Also write the .tex to the output directory for reference
+            Path targetTex = outputDir.resolve(outputFileName + ".tex");
+            Files.copy(texFilePath, targetTex, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
             
             log.info("PDF compiled successfully to {}/{}.pdf", outputDirectory, outputFileName);
-            
-            // Clean up auxiliary files
-            Files.deleteIfExists(workDir.resolve(outputFileName + ".aux"));
-            Files.deleteIfExists(workDir.resolve(outputFileName + ".log"));
-            Files.deleteIfExists(workDir.resolve(outputFileName + ".out"));
-            
             return true;
             
         } catch (Exception e) {
             log.error("Exception during PDF compilation", e);
             return false;
+        } finally {
+            // Clean up temp directory
+            if (tempDir != null) {
+                try {
+                    try (var entries = Files.walk(tempDir)) {
+                        entries.sorted(java.util.Comparator.reverseOrder())
+                                .map(Path::toFile)
+                                .forEach(File::delete);
+                    }
+                } catch (Exception cleanup) {
+                    log.warn("Failed to clean up temp dir {}: {}", tempDir, cleanup.getMessage());
+                }
+            }
         }
     }
 

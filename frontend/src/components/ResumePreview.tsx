@@ -1,4 +1,5 @@
 import React from 'react';
+import { getResumePdfUrl, getResumeTexUrl } from '../lib/api';
 
 interface ResumePreviewProps {
   data: {
@@ -50,8 +51,8 @@ export default function ResumePreview({ data }: ResumePreviewProps) {
   }
 
   const resumeId = data.resumeId || '';
-  const pdfUrl = `http://localhost:8080/api/resumes/download/pdf?id=${encodeURIComponent(resumeId)}`;
-  const texUrl = `http://localhost:8080/api/resumes/download/tex?id=${encodeURIComponent(resumeId)}`;
+  const pdfUrl = getResumePdfUrl(resumeId);
+  const texUrl = getResumeTexUrl(resumeId);
 
   // It's a generated custom resume
   return (

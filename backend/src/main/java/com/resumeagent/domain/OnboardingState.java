@@ -32,6 +32,7 @@ public class OnboardingState {
         PROFESSIONAL_LINKS,
         RESUME_UPLOAD,
         RESUME_REVIEW,
+        EXPERIENCE_ENRICHMENT,
         MASTER_GENERATION
     }
 
@@ -52,6 +53,6 @@ public class OnboardingState {
     public int getCompletionPercentage() {
         if (status == Status.COMPLETED) return 100;
         if (status == Status.NEW) return 0;
-        return (int) ((completedStages.size() / 5.0) * 100);
+        return (int) ((completedStages.size() / 6.0) * 100);
     }
 }

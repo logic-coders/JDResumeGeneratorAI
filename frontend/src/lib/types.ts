@@ -78,6 +78,7 @@ export type OnboardingStage =
   | 'PROFESSIONAL_LINKS'
   | 'RESUME_UPLOAD'
   | 'RESUME_REVIEW'
+  | 'EXPERIENCE_ENRICHMENT'
   | 'MASTER_GENERATION';
 
 export interface OnboardingState {

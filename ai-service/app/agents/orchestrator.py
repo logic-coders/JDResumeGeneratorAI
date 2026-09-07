@@ -233,7 +233,7 @@ class AgentOrchestrator:
             )
 
     async def _handle_profile(self, request: ChatRequest) -> ChatResponse:
-        """Handle /profile command — show current profile."""
+        """Handle /profile command — show current profile with resume sections."""
         profile = request.user_profile
         if not profile or not profile.name:
             return ChatResponse(
@@ -253,7 +253,46 @@ class AgentOrchestrator:
         if profile.portfolio: lines.append(f"**Portfolio:** {profile.portfolio}")
         if profile.website: lines.append(f"**Website:** {profile.website}")
 
-        lines.append("\n_You can update any field by telling me what to change._")
+        # Show resume data summary if available
+        resume = request.master_resume
+        if resume:
+            lines.append("\n---\n📄 **Resume Data**\n")
+            exp = resume.experience if hasattr(resume, 'experience') and resume.experience else []
+            proj = resume.projects if hasattr(resume, 'projects') and resume.projects else []
+            edu = resume.education if hasattr(resume, 'education') and resume.education else []
+            certs = resume.certifications if hasattr(resume, 'certifications') and resume.certifications else []
+            achv = resume.achievements if hasattr(resume, 'achievements') and resume.achievements else []
+            skills = resume.skills
+
+            lines.append(f"**Experience:** {len(exp)} entries")
+            for e in exp[:3]:  # show first 3
+                company = getattr(e, 'company', None) or 'Unknown'
+                title = getattr(e, 'title', None) or ''
+                lines.append(f"  • {company} — {title}")
+            if len(exp) > 3:
+                lines.append(f"  _...and {len(exp) - 3} more_")
+
+            lines.append(f"**Projects:** {len(proj)} entries")
+            for p in proj[:3]:
+                name = getattr(p, 'name', None) or 'Unnamed'
+                lines.append(f"  • {name}")
+            if len(proj) > 3:
+                lines.append(f"  _...and {len(proj) - 3} more_")
+
+            if skills:
+                skill_items = []
+                for cat in ['languages', 'frameworks', 'databases', 'cloud', 'tools']:
+                    items = getattr(skills, cat, []) or []
+                    if items:
+                        skill_items.extend(items[:3])
+                if skill_items:
+                    lines.append(f"**Skills:** {', '.join(skill_items[:8])}{'...' if len(skill_items) > 8 else ''}")
+
+            lines.append(f"**Education:** {len(edu)} entries")
+            lines.append(f"**Certifications:** {len(certs)}")
+            lines.append(f"**Achievements:** {len(achv)}")
+
+        lines.append("\n_You can update any field by telling me what to change, or use the profile editor in the sidebar._")
 
         return ChatResponse(
             response="\n".join(lines),

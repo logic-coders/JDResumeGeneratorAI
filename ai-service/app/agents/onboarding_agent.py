@@ -1,8 +1,17 @@
 """
-Onboarding Agent — manages the /init 5-stage onboarding workflow.
+Onboarding Agent — manages the /init 6-stage onboarding workflow.
 Handles state machine progression, /skip, /back, and field validation.
+
+Stages:
+1. BASIC_PROFILE — Collect name, email, phone, location
+2. PROFESSIONAL_LINKS — Collect LinkedIn, GitHub, etc. (optional)
+3. RESUME_UPLOAD — Ask user to upload resume PDF
+4. RESUME_REVIEW — Show extracted data for confirmation
+5. EXPERIENCE_ENRICHMENT — Optional: add experience/projects not on resume (§12A)
+6. MASTER_GENERATION — Generate master resume
 """
 
+import json
 import logging
 from typing import Optional
 
@@ -11,15 +20,17 @@ from app.models.schemas import (
     ChatRequest, ChatResponse, OnboardingStage, OnboardingStatus,
 )
 from app.validators import validate_field
+from app.prompts.enrichment_parsing import ENRICHMENT_PARSING_SYSTEM, ENRICHMENT_PARSING_USER
 
 logger = logging.getLogger(__name__)
 
-# Define the stage order
+# Define the stage order (6 stages including enrichment)
 STAGE_ORDER = [
     OnboardingStage.BASIC_PROFILE,
     OnboardingStage.PROFESSIONAL_LINKS,
     OnboardingStage.RESUME_UPLOAD,
     OnboardingStage.RESUME_REVIEW,
+    OnboardingStage.EXPERIENCE_ENRICHMENT,
     OnboardingStage.MASTER_GENERATION,
 ]
 
@@ -32,29 +43,61 @@ STAGE_FIELDS = {
         ("location", "What is your **location** (city, state/country)?", True),
     ],
     OnboardingStage.PROFESSIONAL_LINKS: [
-        ("linkedin", "What is your **LinkedIn URL**? _(type /skip to skip)_", False),
-        ("github", "What is your **GitHub URL**? _(type /skip to skip)_", False),
-        ("leetcode", "What is your **LeetCode URL**? _(type /skip to skip)_", False),
-        ("portfolio", "What is your **Portfolio URL**? _(type /skip to skip)_", False),
-        ("website", "What is your **Personal Website**? _(type /skip to skip)_", False),
+        ("linkedin", "What is your **LinkedIn URL**? _(type **skip** or **/skip** to skip)_", False),
+        ("github", "What is your **GitHub URL**? _(type **skip** or **/skip** to skip)_", False),
+        ("leetcode", "What is your **LeetCode URL**? _(type **skip** or **/skip** to skip)_", False),
+        ("portfolio", "What is your **Portfolio URL**? _(type **skip** or **/skip** to skip)_", False),
+        ("website", "What is your **Personal Website**? _(type **skip** or **/skip** to skip)_", False),
     ],
 }
 
 
 class OnboardingAgent:
     """
-    5-stage onboarding state machine.
+    6-stage onboarding state machine.
     
     Stages:
     1. BASIC_PROFILE — Collect name, email, phone, location
     2. PROFESSIONAL_LINKS — Collect LinkedIn, GitHub, etc. (optional)
     3. RESUME_UPLOAD — Ask user to upload resume PDF
     4. RESUME_REVIEW — Show extracted data for confirmation
-    5. MASTER_GENERATION — Generate master resume
+    5. EXPERIENCE_ENRICHMENT — Add experience/projects not on resume
+    6. MASTER_GENERATION — Generate master resume
     """
 
     def __init__(self, llm: LLMProvider):
         self.llm = llm
+
+    @staticmethod
+    def _is_skip(text: str) -> bool:
+        """Check if user input is an intention to skip a step or field."""
+        if not text:
+            return False
+        cleaned = text.strip().lower()
+        skip_phrases = {
+            "/skip", "skip", "skip to skip", "skip this", "skip please", "please skip",
+            "none", "no", "n/a", "na", "pass", "next", "later", "skip it", "nothing",
+            "i don't have one", "dont have one", "i dont have one", "don't have one",
+            "no website", "no portfolio", "no leetcode", "no github", "no linkedin",
+            "not applicable", "leave blank", "nope", "skip for now", "no link", "no url",
+            "don't have", "dont have"
+        }
+        if cleaned in skip_phrases:
+            return True
+        if cleaned.startswith("/skip") or cleaned.startswith("skip "):
+            return True
+        return False
+
+    @staticmethod
+    def _is_skip_all(text: str) -> bool:
+        """Check if user wants to skip all remaining items in the current section."""
+        if not text:
+            return False
+        cleaned = text.strip().lower()
+        return cleaned in {
+            "/skip all", "skip all", "skip-all", "/skipall",
+            "skip the rest", "skip remaining", "skip all links"
+        }
 
     async def start(self, request: ChatRequest) -> ChatResponse:
         """Start or resume onboarding based on current state."""
@@ -67,7 +110,7 @@ class OnboardingAgent:
                     "👋 **Welcome to AI Resume Agent!**\n\n"
                     "Let's set up your professional profile. This will take just a few minutes.\n\n"
                     "I'll ask you a few questions to get started.\n\n"
-                    "**Step 1 of 5: Basic Details**\n\n"
+                    "**Step 1 of 6: Basic Details**\n\n"
                     "What is your **full name**?"
                 ),
                 command="init",
@@ -86,7 +129,7 @@ class OnboardingAgent:
             # Resume from where they left off
             completed = [s.value for s in state.completed_stages] if state.completed_stages else []
             current = state.current_stage.value if state.current_stage else "BASIC_PROFILE"
-            percentage = len(completed) * 20
+            percentage = int(len(completed) / 6 * 100)
 
             return ChatResponse(
                 response=(
@@ -131,8 +174,10 @@ class OnboardingAgent:
         current_stage = state.current_stage or OnboardingStage.BASIC_PROFILE
         completed = [s.value for s in state.completed_stages] if state.completed_stages else []
 
-        # Handle /skip
-        if message.lower() == "/skip":
+        # Handle /skip, skip, none, etc.
+        if self._is_skip(message):
+            if current_stage == OnboardingStage.PROFESSIONAL_LINKS:
+                return await self._process_professional_links(message, completed, request)
             return await self._handle_skip(current_stage, completed, request)
 
         # Handle /back
@@ -152,7 +197,6 @@ class OnboardingAgent:
                 completed.append("RESUME_UPLOAD")
                 
                 try:
-                    import json
                     parsed_resume = json.loads(message)
                 except:
                     parsed_resume = {}
@@ -184,16 +228,27 @@ class OnboardingAgent:
             )
 
         elif current_stage == OnboardingStage.RESUME_REVIEW:
-            if message.lower() in ("confirm", "yes", "looks good", "correct"):
-                # Move to master generation
+            if message.lower() in ("confirm", "yes", "looks good", "correct", "ok", "done", "skip", "/skip", "proceed", "continue", "looks great", "yep", "sure"):
+                # Move to experience enrichment
                 completed.append("RESUME_REVIEW")
                 return ChatResponse(
-                    response="✅ Resume data confirmed!\n\n⏳ Generating your master resume...",
+                    response=(
+                        "✅ Resume data confirmed!\n\n"
+                        "**Step 5 of 6: Additional Experience**\n\n"
+                        "Do you have any **additional experience, projects, or skills** that your resume didn't cover?\n\n"
+                        "For example:\n"
+                        "• Side projects or personal projects\n"
+                        "• Skills you've learned outside work (e.g., AI/ML, cloud certifications)\n"
+                        "• Freelance or contract work\n"
+                        "• Open-source contributions\n\n"
+                        "Just describe them in your own words, and I'll add them to your profile.\n\n"
+                        "_Type `/skip` if your resume covers everything._"
+                    ),
                     agent_type="onboarding",
                     data={
                         "onboardingState": {
                             "status": "IN_PROGRESS",
-                            "currentStage": "MASTER_GENERATION",
+                            "currentStage": "EXPERIENCE_ENRICHMENT",
                             "completedStages": completed,
                         }
                     },
@@ -203,6 +258,9 @@ class OnboardingAgent:
                     response="Please review the extracted information and type **confirm** if it looks correct, or tell me what needs to be changed.",
                     agent_type="onboarding",
                 )
+
+        elif current_stage == OnboardingStage.EXPERIENCE_ENRICHMENT:
+            return await self._process_experience_enrichment(message, completed, request)
 
         elif current_stage == OnboardingStage.MASTER_GENERATION:
             completed.append("MASTER_GENERATION")
@@ -248,7 +306,7 @@ class OnboardingAgent:
             return ChatResponse(
                 response=(
                     f"✅ **Basic details saved!**\n\n"
-                    f"**Step 2 of 5: Professional Links**\n\n"
+                    f"**Step 2 of 6: Professional Links**\n\n"
                     f"{next_field[1]}"
                 ),
                 agent_type="onboarding",
@@ -300,7 +358,7 @@ class OnboardingAgent:
             return ChatResponse(
                 response=(
                     f"✅ **Basic details saved!**\n\n"
-                    f"**Step 2 of 5: Professional Links**\n\n"
+                    f"**Step 2 of 6: Professional Links**\n\n"
                     f"{prof_link_fields[0][1]}"
                 ),
                 agent_type="onboarding",
@@ -347,7 +405,7 @@ class OnboardingAgent:
             return ChatResponse(
                 response=(
                     "✅ **Professional links saved!**\n\n"
-                    "**Step 3 of 5: Resume Upload**\n\n"
+                    "**Step 3 of 6: Resume Upload**\n\n"
                     "📄 Please upload your current resume as a **PDF file** using the 📎 button.\n\n"
                     "_If you don't have one ready, type `/skip` to create one from scratch later._"
                 ),
@@ -363,6 +421,77 @@ class OnboardingAgent:
             )
 
         field_name, question, required = current_field
+
+        # Check if user wants to skip all remaining links
+        if self._is_skip_all(message):
+            completed.append("PROFESSIONAL_LINKS")
+            return ChatResponse(
+                response=(
+                    "No problem, skipped the remaining links!\n\n"
+                    "**Step 3 of 6: Resume Upload**\n\n"
+                    "📄 Please upload your current resume as a **PDF file** using the 📎 button.\n\n"
+                    "_If you don't have one ready, type `/skip` to create one from scratch later._"
+                ),
+                agent_type="onboarding",
+                data={
+                    "onboardingState": {
+                        "status": "IN_PROGRESS",
+                        "currentStage": "RESUME_UPLOAD",
+                        "completedStages": completed,
+                    }
+                },
+                actions={"showFileUpload": True},
+            )
+
+        # Check if user wants to skip this specific field
+        if self._is_skip(message):
+            profile_dict[field_name] = ""
+            profile_update = {field_name: ""}
+
+            # Find next field
+            found_current = False
+            next_field = None
+            for fname, fquestion, freq in fields:
+                if fname == field_name:
+                    found_current = True
+                    continue
+                if found_current and profile_dict.get(fname) is None:
+                    next_field = (fname, fquestion, freq)
+                    break
+
+            if next_field is None:
+                completed.append("PROFESSIONAL_LINKS")
+                return ChatResponse(
+                    response=(
+                        "✅ **Professional links saved!**\n\n"
+                        "**Step 3 of 6: Resume Upload**\n\n"
+                        "📄 Please upload your current resume as a **PDF file** using the 📎 button.\n\n"
+                        "_If you don't have one ready, type `/skip` to create one from scratch later._"
+                    ),
+                    agent_type="onboarding",
+                    data={
+                        "onboardingState": {
+                            "status": "IN_PROGRESS",
+                            "currentStage": "RESUME_UPLOAD",
+                            "completedStages": completed,
+                        },
+                        "profileUpdate": profile_update,
+                    },
+                    actions={"showFileUpload": True},
+                )
+
+            return ChatResponse(
+                response=f"Got it, skipped! {next_field[1]}",
+                agent_type="onboarding",
+                data={
+                    "onboardingState": {
+                        "status": "IN_PROGRESS",
+                        "currentStage": "PROFESSIONAL_LINKS",
+                        "completedStages": completed,
+                    },
+                    "profileUpdate": profile_update,
+                },
+            )
 
         # Validate URL fields
         is_valid, error_msg = validate_field(field_name, message)
@@ -391,7 +520,7 @@ class OnboardingAgent:
             return ChatResponse(
                 response=(
                     "✅ **Professional links saved!**\n\n"
-                    "**Step 3 of 5: Resume Upload**\n\n"
+                    "**Step 3 of 6: Resume Upload**\n\n"
                     "📄 Please upload your current resume as a **PDF file** using the 📎 button.\n\n"
                     "_If you don't have one ready, type `/skip` to create one from scratch later._"
                 ),
@@ -420,6 +549,110 @@ class OnboardingAgent:
             },
         )
 
+    async def _process_experience_enrichment(
+        self, message: str, completed: list, request: ChatRequest
+    ) -> ChatResponse:
+        """
+        Process the EXPERIENCE_ENRICHMENT stage (§12A).
+        User can provide free-form text about additional experience/projects/skills.
+        We parse it via LLM and merge into the verified data pool.
+        """
+        if self._is_skip(message) or message.lower() in ("done", "that's all", "no more", "nothing else", "no", "none", "nope", "finished"):
+            completed.append("EXPERIENCE_ENRICHMENT")
+            completed.append("MASTER_GENERATION")
+            return ChatResponse(
+                response=(
+                    "🎉 **Profile setup complete!**\n\n"
+                    "I've successfully generated your master resume based on the information provided.\n\n"
+                    "You can view it in the sidebar under **My Resume**. Now you can:\n"
+                    "📄 `/resume` — Generate a job-specific resume\n"
+                    "🔍 `/analyze` — Analyze a job description\n"
+                    "✨ `/improve` — Improve your resume\n\n"
+                    "What would you like to do next?"
+                ),
+                agent_type="onboarding",
+                data={
+                    "onboardingState": {
+                        "status": "COMPLETED",
+                        "currentStage": None,
+                        "completedStages": completed,
+                    }
+                },
+            )
+
+        # Parse the user's free-form input via LLM
+        existing_resume = {}
+        if request.master_resume:
+            existing_resume = request.master_resume.model_dump() if hasattr(request.master_resume, 'model_dump') else {}
+
+        try:
+            messages = [
+                {"role": "system", "content": ENRICHMENT_PARSING_SYSTEM},
+                {"role": "user", "content": ENRICHMENT_PARSING_USER.format(
+                    existing_resume_json=json.dumps(existing_resume, indent=2, default=str),
+                    user_input=message,
+                )},
+            ]
+            response = await self.llm.structured_output(messages, temperature=0.2)
+            enrichment_data = self._extract_json(response)
+
+            if "error" in enrichment_data:
+                return ChatResponse(
+                    response=(
+                        "I had trouble parsing that. Could you try describing your additional experience more clearly?\n\n"
+                        "For example:\n"
+                        "• \"I built a personal project called TaskTracker using React and Node.js\"\n"
+                        "• \"I have AWS Solutions Architect certification\"\n"
+                        "• \"I did freelance work at XYZ company for 6 months\"\n\n"
+                        "_Type `/skip` if you're done adding, or `done` to move on._"
+                    ),
+                    agent_type="onboarding",
+                )
+
+            # Count what was extracted
+            items_added = []
+            if enrichment_data.get("experience"):
+                items_added.append(f"{len(enrichment_data['experience'])} experience(s)")
+            if enrichment_data.get("projects"):
+                items_added.append(f"{len(enrichment_data['projects'])} project(s)")
+            if enrichment_data.get("skills"):
+                skill_count = sum(len(v) for v in enrichment_data["skills"].values() if isinstance(v, list))
+                if skill_count:
+                    items_added.append(f"{skill_count} skill(s)")
+            if enrichment_data.get("certifications"):
+                items_added.append(f"{len(enrichment_data['certifications'])} certification(s)")
+            if enrichment_data.get("achievements"):
+                items_added.append(f"{len(enrichment_data['achievements'])} achievement(s)")
+
+            summary = ", ".join(items_added) if items_added else "your information"
+
+            return ChatResponse(
+                response=(
+                    f"✅ Got it! I've added **{summary}** to your profile.\n\n"
+                    "Have anything else to add? Just tell me, or type **done** to generate your master resume.\n\n"
+                    "_Type `/skip` if you're finished._"
+                ),
+                agent_type="onboarding",
+                data={
+                    "enrichmentData": enrichment_data,
+                    "onboardingState": {
+                        "status": "IN_PROGRESS",
+                        "currentStage": "EXPERIENCE_ENRICHMENT",
+                        "completedStages": completed,
+                    },
+                },
+            )
+
+        except Exception as e:
+            logger.error(f"Enrichment parsing failed: {e}")
+            return ChatResponse(
+                response=(
+                    "I had trouble processing that. Could you try again with a clearer description?\n\n"
+                    "_Type `/skip` to skip this step, or `done` when you're finished._"
+                ),
+                agent_type="onboarding",
+            )
+
     async def _handle_skip(
         self, current_stage: OnboardingStage, completed: list, request: ChatRequest
     ) -> ChatResponse:
@@ -435,7 +668,7 @@ class OnboardingAgent:
             return ChatResponse(
                 response=(
                     "No problem! You can add professional links later from your profile settings.\n\n"
-                    "**Step 3 of 5: Resume Upload**\n\n"
+                    "**Step 3 of 6: Resume Upload**\n\n"
                     "📄 Please upload your current resume as a **PDF file** using the 📎 button.\n\n"
                     "_If you don't have one ready, type `/skip` again._"
                 ),
@@ -453,6 +686,7 @@ class OnboardingAgent:
         elif current_stage == OnboardingStage.RESUME_UPLOAD:
             completed.append("RESUME_UPLOAD")
             completed.append("RESUME_REVIEW")
+            completed.append("EXPERIENCE_ENRICHMENT")
             return ChatResponse(
                 response=(
                     "No problem! You can upload your resume later.\n\n"
@@ -470,6 +704,30 @@ class OnboardingAgent:
                         "status": "COMPLETED",
                         "currentStage": None,
                         "completedStages": completed + ["MASTER_GENERATION"],
+                    }
+                },
+            )
+
+        elif current_stage == OnboardingStage.EXPERIENCE_ENRICHMENT:
+            completed.append("EXPERIENCE_ENRICHMENT")
+            completed.append("MASTER_GENERATION")
+            return ChatResponse(
+                response=(
+                    "No problem! You can always add more experience later via `/profile`.\n\n"
+                    "🎉 **Profile setup complete!**\n\n"
+                    "I've successfully generated your master resume based on the information provided.\n\n"
+                    "You can view it in the sidebar under **My Resume**. Now you can:\n"
+                    "📄 `/resume` — Generate a job-specific resume\n"
+                    "🔍 `/analyze` — Analyze a job description\n"
+                    "✨ `/improve` — Improve your resume\n\n"
+                    "What would you like to do next?"
+                ),
+                agent_type="onboarding",
+                data={
+                    "onboardingState": {
+                        "status": "COMPLETED",
+                        "currentStage": None,
+                        "completedStages": completed,
                     }
                 },
             )
@@ -514,6 +772,7 @@ class OnboardingAgent:
             ("Professional Links", "PROFESSIONAL_LINKS"),
             ("Resume Upload", "RESUME_UPLOAD"),
             ("Resume Review", "RESUME_REVIEW"),
+            ("Additional Experience", "EXPERIENCE_ENRICHMENT"),
             ("Master Resume", "MASTER_GENERATION"),
         ]
         lines = []
@@ -525,3 +784,20 @@ class OnboardingAgent:
             else:
                 lines.append(f"○ {label}")
         return "\n".join(lines)
+
+    def _extract_json(self, response: str) -> dict:
+        """Extract JSON from LLM response, handling markdown code blocks."""
+        text = response.strip()
+        if text.startswith("```json"):
+            text = text[7:]
+        elif text.startswith("```"):
+            text = text[3:]
+        if text.endswith("```"):
+            text = text[:-3]
+        text = text.strip()
+
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse enrichment JSON: {e}")
+            return {"error": "Failed to parse", "raw": response[:500]}

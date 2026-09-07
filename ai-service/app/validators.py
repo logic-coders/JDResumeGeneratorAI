@@ -93,6 +93,10 @@ def validate_url(url: str, platform: Optional[str] = None) -> Tuple[bool, Option
     if not url:
         return False, "URL is required."
     
+    lower = url.lower()
+    if lower in ("skip", "/skip", "none", "no", "n/a", "na", "skip to skip", "skip this", "pass"):
+        return False, "Please enter a valid URL, or type `skip` to skip this optional field."
+    
     # Auto-prepend https:// if missing
     if not url.startswith("http://") and not url.startswith("https://"):
         url = "https://" + url

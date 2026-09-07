@@ -8,6 +8,7 @@ import type {
   ChatMessageRequest
 } from '../lib/types';
 import * as api from '../lib/api';
+import { getUserId } from '../lib/api';
 
 interface ChatContextType {
   // Conversation state
@@ -32,6 +33,9 @@ interface ChatContextType {
   // App state
   onboardingState: OnboardingState | null;
   refreshOnboardingState: () => Promise<void>;
+  
+  // User identity
+  userId: string;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -45,6 +49,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [engineState, setEngineState] = useState<{ active: boolean; progress: number; status: string; logs: { time: string; message: string }[]; startTime: number } | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [onboardingState, setOnboardingState] = useState<OnboardingState | null>(null);
+  const [userId] = useState<string>(() => getUserId());
 
   const activeConversation = conversations.find(c => c.conversationId === activeConversationId) || null;
 
@@ -299,6 +304,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         setSidebarOpen,
         onboardingState,
         refreshOnboardingState,
+        userId,
       }}
     >
       {children}

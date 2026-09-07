@@ -1,10 +1,11 @@
 package com.resumeagent.controller;
 
+import com.resumeagent.config.UserIdResolver;
 import com.resumeagent.domain.Resume;
 import com.resumeagent.dto.GeneratedResumeItem;
 import com.resumeagent.service.ResumeService;
-import com.resumeagent.service.UserService;
 import com.resumeagent.storage.FileStorageService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +16,7 @@ import java.util.Map;
 
 /**
  * REST controller for resume operations.
+ * userId is resolved from the X-User-Id request header (multi-user support).
  */
 @Slf4j
 @RestController
@@ -23,15 +25,15 @@ import java.util.Map;
 public class ResumeController {
 
     private final ResumeService resumeService;
-    private final UserService userService;
+    private final UserIdResolver userIdResolver;
     private final FileStorageService storageService;
 
     /**
      * Get the master resume data.
      */
     @GetMapping("/master")
-    public ResponseEntity<Resume> getMasterResume() {
-        String userId = userService.getDefaultUserId();
+    public ResponseEntity<Resume> getMasterResume(HttpServletRequest httpRequest) {
+        String userId = userIdResolver.resolve(httpRequest);
         return resumeService.getMasterResume(userId)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -41,11 +43,11 @@ public class ResumeController {
      * Download the master resume as a PDF.
      */
     @GetMapping(value = "/master/pdf", produces = org.springframework.http.MediaType.APPLICATION_PDF_VALUE)
-    public ResponseEntity<org.springframework.core.io.Resource> getMasterResumePdf() {
-        String userId = userService.getDefaultUserId();
+    public ResponseEntity<org.springframework.core.io.Resource> getMasterResumePdf(HttpServletRequest httpRequest) {
+        String userId = userIdResolver.resolve(httpRequest);
         try {
             java.nio.file.Path pdfPath = java.nio.file.Paths.get(
-                "./storage/users/" + userId + "/master/master_resume.pdf"
+                storageService.getMasterResumePdfPath(userId)
             );
             if (!java.nio.file.Files.exists(pdfPath)) {
                 return ResponseEntity.notFound().build();
@@ -65,8 +67,8 @@ public class ResumeController {
      * List all generated resumes.
      */
     @GetMapping("/generated")
-    public ResponseEntity<List<GeneratedResumeItem>> listGeneratedResumes() {
-        String userId = userService.getDefaultUserId();
+    public ResponseEntity<List<GeneratedResumeItem>> listGeneratedResumes(HttpServletRequest httpRequest) {
+        String userId = userIdResolver.resolve(httpRequest);
         return ResponseEntity.ok(resumeService.listGeneratedResumes(userId));
     }
 
@@ -76,8 +78,9 @@ public class ResumeController {
     @DeleteMapping(value = {"/generated/{resumeId}", "/generated", "/{resumeId}"})
     public ResponseEntity<Map<String, Object>> deleteGeneratedResume(
             @PathVariable(required = false) String resumeId,
-            @RequestParam(required = false) String id) {
-        String userId = userService.getDefaultUserId();
+            @RequestParam(required = false) String id,
+            HttpServletRequest httpRequest) {
+        String userId = userIdResolver.resolve(httpRequest);
         String targetId = (resumeId != null && !resumeId.isBlank()) ? resumeId : id;
         if (targetId == null || targetId.isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("status", "error", "message", "Resume ID must be provided"));
@@ -95,8 +98,11 @@ public class ResumeController {
      * Save/update master resume data.
      */
     @PutMapping("/master")
-    public ResponseEntity<Void> saveMasterResume(@RequestBody Resume resume) {
-        String userId = userService.getDefaultUserId();
+    public ResponseEntity<Void> saveMasterResume(
+            @RequestBody Resume resume,
+            HttpServletRequest httpRequest) {
+        String userId = userIdResolver.resolve(httpRequest);
+        storageService.ensureUserDirectories(userId);
         resumeService.saveMasterResume(userId, resume);
         return ResponseEntity.ok().build();
     }
@@ -105,8 +111,10 @@ public class ResumeController {
      * Generate custom resume for a job
      */
     @PostMapping("/generate")
-    public ResponseEntity<Object> generateResume(@RequestBody Map<String, Object> request) {
-        String userId = userService.getDefaultUserId();
+    public ResponseEntity<Object> generateResume(
+            @RequestBody Map<String, Object> request,
+            HttpServletRequest httpRequest) {
+        String userId = userIdResolver.resolve(httpRequest);
         try {
             return ResponseEntity.ok(resumeService.generateCustomResume(userId, request.get("jobUrl").toString()));
         } catch (Exception e) {
@@ -119,8 +127,10 @@ public class ResumeController {
      * Generate custom resume for a job with SSE streaming progress
      */
     @GetMapping(value = "/stream-generate", produces = org.springframework.http.MediaType.TEXT_EVENT_STREAM_VALUE)
-    public org.springframework.web.servlet.mvc.method.annotation.SseEmitter streamGenerateResume(@RequestParam String jobUrl) {
-        String userId = userService.getDefaultUserId();
+    public org.springframework.web.servlet.mvc.method.annotation.SseEmitter streamGenerateResume(
+            @RequestParam String jobUrl,
+            HttpServletRequest httpRequest) {
+        String userId = userIdResolver.resolve(httpRequest);
         
         org.springframework.web.servlet.mvc.method.annotation.SseEmitter emitter = new org.springframework.web.servlet.mvc.method.annotation.SseEmitter(600000L); // 10 min timeout
         
@@ -143,8 +153,10 @@ public class ResumeController {
      * Analyze master resume against a job
      */
     @PostMapping("/analyze")
-    public ResponseEntity<Object> analyzeResume(@RequestBody Map<String, Object> request) {
-        String userId = userService.getDefaultUserId();
+    public ResponseEntity<Object> analyzeResume(
+            @RequestBody Map<String, Object> request,
+            HttpServletRequest httpRequest) {
+        String userId = userIdResolver.resolve(httpRequest);
         try {
             return ResponseEntity.ok(resumeService.analyzeResume(userId, request.get("jobUrl").toString()));
         } catch (Exception e) {
@@ -157,8 +169,10 @@ public class ResumeController {
      * Improve master resume
      */
     @PostMapping("/improve")
-    public ResponseEntity<Object> improveResume(@RequestBody Map<String, Object> request) {
-        String userId = userService.getDefaultUserId();
+    public ResponseEntity<Object> improveResume(
+            @RequestBody Map<String, Object> request,
+            HttpServletRequest httpRequest) {
+        String userId = userIdResolver.resolve(httpRequest);
         try {
             String focusArea = request.containsKey("focusArea") ? request.get("focusArea").toString() : "overall";
             return ResponseEntity.ok(resumeService.improveResume(userId, focusArea));
@@ -170,13 +184,13 @@ public class ResumeController {
 
     /**
      * Download or preview a generated PDF.
-     * Supports resumeId as path variable (e.g. "Qualcomm__446720486356" or "job_xxx") or query param.
      */
     @GetMapping(value = {"/{resumeId}/pdf", "/download/pdf"})
     public ResponseEntity<org.springframework.core.io.Resource> getGeneratedResumePdf(
             @PathVariable(required = false) String resumeId,
-            @RequestParam(required = false) String id) {
-        String userId = userService.getDefaultUserId();
+            @RequestParam(required = false) String id,
+            HttpServletRequest httpRequest) {
+        String userId = userIdResolver.resolve(httpRequest);
         String targetId = (resumeId != null && !resumeId.isBlank()) ? resumeId : id;
         if (targetId == null || targetId.isBlank()) {
             return ResponseEntity.badRequest().build();
@@ -191,7 +205,6 @@ public class ResumeController {
             java.nio.file.Path pdfPath = pdfPathOpt.get();
             org.springframework.core.io.Resource resource = new org.springframework.core.io.UrlResource(pdfPath.toUri());
 
-            // Build friendly download filename, e.g. "Qualcomm_Resume.pdf"
             String filename = targetId.contains("__")
                     ? targetId.split("__")[0] + "_Resume.pdf"
                     : "resume_" + targetId + ".pdf";
@@ -212,8 +225,9 @@ public class ResumeController {
     @GetMapping(value = {"/{resumeId}/tex", "/download/tex"}, produces = org.springframework.http.MediaType.TEXT_PLAIN_VALUE)
     public ResponseEntity<String> getGeneratedResumeTex(
             @PathVariable(required = false) String resumeId,
-            @RequestParam(required = false) String id) {
-        String userId = userService.getDefaultUserId();
+            @RequestParam(required = false) String id,
+            HttpServletRequest httpRequest) {
+        String userId = userIdResolver.resolve(httpRequest);
         String targetId = (resumeId != null && !resumeId.isBlank()) ? resumeId : id;
         if (targetId == null || targetId.isBlank()) {
             return ResponseEntity.badRequest().build();

@@ -9,7 +9,7 @@ import ResumePreview from './ResumePreview';
 import GenerationEngineUI from './GenerationEngineUI';
 
 export default function ChatWindow() {
-  const { messages, isTyping, processingState, engineState } = useChat();
+  const { messages, isTyping, processingState, engineState, sendMessage } = useChat();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -32,6 +32,10 @@ export default function ChatWindow() {
     <div className="flex-1 overflow-y-auto scroll-smooth p-4 md:p-6 space-y-6">
       {messages.map((msg, idx) => {
         const isUser = msg.role === 'USER';
+        const isLatestAssistant = idx === messages.length - 1 && !isUser && !isTyping;
+        const lowerContent = msg.content.toLowerCase();
+        const hasSkip = lowerContent.includes('skip');
+        const hasConfirm = lowerContent.includes('confirm');
         
         return (
           <div 
@@ -60,6 +64,28 @@ export default function ChatWindow() {
                 ) : (
                   <div className="prose prose-invert prose-sm md:prose-base max-w-full min-w-0 break-words break-all overflow-x-hidden">
                     <ReactMarkdown>{msg.content}</ReactMarkdown>
+                  </div>
+                )}
+
+                {/* Quick Action Chips for Interactive Prompts */}
+                {isLatestAssistant && (hasSkip || hasConfirm) && (
+                  <div className="flex flex-wrap gap-2 mt-3 pt-2.5 border-t border-[var(--color-panel-border)]/50">
+                    {hasSkip && (
+                      <button
+                        onClick={() => sendMessage({ message: '/skip' })}
+                        className="text-xs px-3 py-1.5 rounded-lg bg-[var(--color-secondary)] hover:bg-[var(--color-primary)]/20 border border-[var(--color-panel-border)] hover:border-[var(--color-primary)] text-[var(--color-foreground)] transition-all flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95 hover:shadow"
+                      >
+                        <span>⏭️</span> Skip this
+                      </button>
+                    )}
+                    {hasConfirm && (
+                      <button
+                        onClick={() => sendMessage({ message: 'confirm' })}
+                        className="text-xs px-3 py-1.5 rounded-lg bg-[var(--color-primary)]/20 hover:bg-[var(--color-primary)]/40 border border-[var(--color-primary)] text-[var(--color-foreground)] transition-all flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95 font-medium"
+                      >
+                        <span>✅</span> Confirm & Continue
+                      </button>
+                    )}
                   </div>
                 )}
                 

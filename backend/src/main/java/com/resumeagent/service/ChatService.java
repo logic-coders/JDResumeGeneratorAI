@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -44,8 +45,7 @@ public class ChatService {
      * 4. Save AI response
      * 5. Return response
      */
-    public ChatMessageResponse processMessage(ChatMessageRequest request) {
-        String userId = appConfig.getDefaultUserId();
+    public ChatMessageResponse processMessage(String userId, ChatMessageRequest request) {
 
         // Load or create conversation
         String conversationId = request.getConversationId();
@@ -128,10 +128,82 @@ public class ChatService {
                         }
                     });
                     userService.saveProfile(userId, profile);
+                    
+                    // Sync personal info to master resume immediately so it's never completely empty
+                    Resume existingResume = resumeService.getMasterResume(userId).orElse(new Resume());
+                    if (existingResume.getPersonalInfo() == null) {
+                        existingResume.setPersonalInfo(new Resume.PersonalInfo());
+                    }
+                    existingResume.getPersonalInfo().setName(profile.getName());
+                    existingResume.getPersonalInfo().setEmail(profile.getEmail());
+                    existingResume.getPersonalInfo().setPhone(profile.getPhone());
+                    existingResume.getPersonalInfo().setLocation(profile.getLocation());
+                    existingResume.getPersonalInfo().setLinkedin(profile.getLinkedin());
+                    existingResume.getPersonalInfo().setGithub(profile.getGithub());
+                    existingResume.getPersonalInfo().setPortfolio(profile.getPortfolio());
+                    resumeService.saveMasterResume(userId, existingResume);
                 }
                 if (data.containsKey("parsedResume")) {
                     Resume parsed = objectMapper.convertValue(data.get("parsedResume"), Resume.class);
                     resumeService.saveMasterResume(userId, parsed);
+                }
+                if (data.containsKey("enrichmentData")) {
+                    // Merge additional experience/projects/skills from the enrichment step
+                    Resume existing = resumeService.getMasterResume(userId).orElse(new Resume());
+                    java.util.Map<String, Object> enrichment = (java.util.Map<String, Object>) data.get("enrichmentData");
+                    try {
+                        if (enrichment.containsKey("experience")) {
+                            List<Resume.Experience> extra = objectMapper.convertValue(
+                                    enrichment.get("experience"),
+                                    objectMapper.getTypeFactory().constructCollectionType(List.class, Resume.Experience.class));
+                            if (existing.getExperience() == null) {
+                                existing.setExperience(new ArrayList<>());
+                            }
+                            existing.getExperience().addAll(extra);
+                        }
+                        if (enrichment.containsKey("projects")) {
+                            List<Resume.Project> extra = objectMapper.convertValue(
+                                    enrichment.get("projects"),
+                                    objectMapper.getTypeFactory().constructCollectionType(List.class, Resume.Project.class));
+                            if (existing.getProjects() == null) {
+                                existing.setProjects(new ArrayList<>());
+                            }
+                            existing.getProjects().addAll(extra);
+                        }
+                        if (enrichment.containsKey("skills")) {
+                            Resume.Skills extraSkills = objectMapper.convertValue(enrichment.get("skills"), Resume.Skills.class);
+                            Resume.Skills current = existing.getSkills() != null ? existing.getSkills() : new Resume.Skills();
+                            // Merge each skill category, deduplicating
+                            current.setLanguages(mergeSkillList(current.getLanguages(), extraSkills.getLanguages()));
+                            current.setFrameworks(mergeSkillList(current.getFrameworks(), extraSkills.getFrameworks()));
+                            current.setDatabases(mergeSkillList(current.getDatabases(), extraSkills.getDatabases()));
+                            current.setCloud(mergeSkillList(current.getCloud(), extraSkills.getCloud()));
+                            current.setTools(mergeSkillList(current.getTools(), extraSkills.getTools()));
+                            existing.setSkills(current);
+                        }
+                        if (enrichment.containsKey("certifications")) {
+                            List<String> extra = objectMapper.convertValue(
+                                    enrichment.get("certifications"),
+                                    objectMapper.getTypeFactory().constructCollectionType(List.class, String.class));
+                            if (existing.getCertifications() == null) {
+                                existing.setCertifications(new ArrayList<>());
+                            }
+                            existing.getCertifications().addAll(extra);
+                        }
+                        if (enrichment.containsKey("achievements")) {
+                            List<String> extra = objectMapper.convertValue(
+                                    enrichment.get("achievements"),
+                                    objectMapper.getTypeFactory().constructCollectionType(List.class, String.class));
+                            if (existing.getAchievements() == null) {
+                                existing.setAchievements(new ArrayList<>());
+                            }
+                            existing.getAchievements().addAll(extra);
+                        }
+                        resumeService.saveMasterResume(userId, existing);
+                        log.info("Merged enrichment data into master resume for user: {}", userId);
+                    } catch (Exception enrichErr) {
+                        log.error("Failed to merge enrichment data: {}", enrichErr.getMessage());
+                    }
                 }
             } catch (Exception e) {
                 log.error("Failed to parse structured data updates: {}", e.getMessage());
@@ -248,5 +320,26 @@ public class ChatService {
         return storageService.delete(
                 storageService.getConversationPath(userId, conversationId)
         );
+    }
+
+    /**
+     * Merge skills from source into target, deduplicating (case-insensitive).
+     */
+    private List<String> mergeSkillList(List<String> target, List<String> source) {
+        if (target == null) {
+            target = new ArrayList<>();
+        }
+        if (source == null || source.isEmpty()) {
+            return target;
+        }
+        java.util.Set<String> existing = new java.util.TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        existing.addAll(target);
+        for (String skill : source) {
+            if (skill != null && !skill.isBlank() && !existing.contains(skill.trim())) {
+                target.add(skill.trim());
+                existing.add(skill.trim());
+            }
+        }
+        return target;
     }
 }

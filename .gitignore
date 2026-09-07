@@ -22,7 +22,9 @@ dist/
 build/
 
 # Storage (runtime data)
-storage/
+/storage/*
+!/storage/.gitkeep
+backend/storage/
 
 # OS
 .DS_Store
