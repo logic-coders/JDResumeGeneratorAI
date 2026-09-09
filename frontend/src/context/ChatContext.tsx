@@ -173,13 +173,17 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       }
 
       // Handle backend action triggers (Phase 3/4 integration)
-      if (response.structuredData?.actions?.triggerApi && response.structuredData?.data?.jobUrl) {
-        setIsTyping(false); // Hide the dots, show the processing state instead
+      if (response.structuredData?.actions?.triggerApi) {
         const endpoint = response.structuredData.actions.triggerApi;
-        const jobUrl = response.structuredData.data.jobUrl;
+        const jobUrl = response.structuredData?.data?.jobUrl;
         
-        try {
-          let resultData = null;
+        const requiresJobUrl = endpoint === '/api/resumes/analyze' || endpoint === '/api/resumes/generate';
+        
+        if (!requiresJobUrl || jobUrl) {
+          setIsTyping(false); // Hide the dots, show the processing state instead
+          
+          try {
+            let resultData = null;
           if (endpoint === '/api/resumes/analyze') {
             setProcessingState("Analyzing job description and matching with your profile...");
             resultData = { matchReport: await api.analyzeResume(jobUrl) };
@@ -266,9 +270,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
             content: 'Failed to complete the requested action. Please try again.',
             timestamp: new Date().toISOString(),
           }]);
-        } finally {
-          setIsTyping(false);
-          setProcessingState(null);
+          } finally {
+            setIsTyping(false);
+            setProcessingState(null);
+          }
         }
       }
 

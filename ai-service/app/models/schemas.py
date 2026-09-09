@@ -4,7 +4,7 @@ These enforce that LLM output conforms to expected JSON structures.
 """
 
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
 from enum import Enum
 
 
@@ -139,6 +139,22 @@ class MatchReport(BaseModel):
     model_config = {"populate_by_name": True}
 
 
+class TargetRole(BaseModel):
+    """Structured output of §18 Step A — Target Role Extraction."""
+    job_title: str = Field("", alias="jobTitle")
+    seniority: str = ""
+    domain: str = ""
+    primary_focus: str = Field("", alias="primaryFocus")
+    required_skills: List[str] = Field(default_factory=list, alias="requiredSkills")
+    preferred_skills: List[str] = Field(default_factory=list, alias="preferredSkills")
+    key_responsibilities: List[str] = Field(default_factory=list, alias="keyResponsibilities")
+    minimum_years_experience: int = Field(0, alias="minimumYearsExperience")
+    must_have_keywords: List[str] = Field(default_factory=list, alias="mustHaveKeywords")
+    nice_to_have_keywords: List[str] = Field(default_factory=list, alias="niceToHaveKeywords")
+
+    model_config = {"populate_by_name": True}
+
+
 class OnboardingState(BaseModel):
     status: OnboardingStatus = OnboardingStatus.NEW
     current_stage: Optional[OnboardingStage] = Field(None, alias="currentStage")
@@ -204,5 +220,17 @@ class OptimizeRequest(BaseModel):
 class ImproveRequest(BaseModel):
     master_resume: dict = Field(alias="masterResume")
     focus_area: str = Field("overall", alias="focusArea")
+
+    model_config = {"populate_by_name": True}
+
+
+class GenerateResumeRequest(BaseModel):
+    """Request model for the §18 mandatory 4-step pipeline endpoint."""
+    master_resume: dict = Field(alias="masterResume")
+    job: dict
+    match_report: dict = Field(alias="matchReport")
+    # §18.5 regression check — SHA-256 fingerprint of the last generated resume for this user.
+    # If provided and the new generation produces the same fingerprint, generation is rejected.
+    previous_resume_fingerprint: Optional[str] = Field(None, alias="previousResumeFingerprint")
 
     model_config = {"populate_by_name": True}

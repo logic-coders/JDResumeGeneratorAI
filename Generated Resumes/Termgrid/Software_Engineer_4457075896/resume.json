@@ -1,0 +1,44 @@
+{
+  "personalInfo" : {
+    "name" : "Chandan Kumar Singh",
+    "email" : "cs.sde07@gmail.com",
+    "phone" : "+91-6200952129",
+    "location" : "",
+    "linkedin" : "LinkedIn",
+    "github" : "GitHub",
+    "leetcode" : "LeetCode"
+  },
+  "summary" : "Backend Software Engineer with 1+ year of experience building scalable Java/Spring Boot microservices and REST APIs. Proven track record in designing event-driven systems with Kafka, optimizing latency by up to 40%, and reducing operational overhead through automation and API gateway patterns. Strong problem‑solver with end‑to‑end ownership, experienced in AWS, Docker, Kubernetes, CI/CD, and caching with Redis. Passionate about delivering high‑performance, reliable platforms for financial workflows.",
+  "skills" : {
+    "languages" : [ "Java", "Python", "C++", "SQL", "JavaScript", "TypeScript" ],
+    "frameworks" : [ "Spring Boot", "Spring Security", "Hibernate", "gRPC", "Kafka", "REST API", "FastAPI", "React.js" ],
+    "databases" : [ "MySQL", "PostgreSQL", "Redis", "FAISS", "ChromaDB" ],
+    "cloud" : [ "AWS (EC2, S3)", "Docker", "Kubernetes", "Jenkins" ],
+    "tools" : [ "Git", "GitHub", "SVN", "Jenkins", "NumPy", "Pandas", "Scikit-learn", "HuggingFace", "Transformers", "LangChain" ],
+    "methodologies" : [ ]
+  },
+  "experience" : [ {
+    "company" : "Tata Consultancy Services",
+    "title" : "Software Engineer — Java, Spring Boot, Microservices",
+    "location" : "",
+    "startDate" : "Jan 2025",
+    "endDate" : "Present",
+    "bullets" : [ "Scalable API Design: Designed and owned RESTful APIs serving business‑critical banking workflows; reduced average response latency by 40% and improved platform scalability by 50% through service‑layer optimizations.", "API Gateway & System Design: Architected a centralized API Gateway with secret‑key authentication and JWT token‑reuse strategy, cutting inter‑service overhead by 60% and improving distributed system reliability.", "Automation & Ownership: Owned end‑to‑end delivery of internal automation solutions, eliminating 64% of manual operational effort and improving team release velocity.", "High‑Throughput Engineering: Engineered a Bulk Upload pipeline for concurrent ingestion of thousands of records per request, improving system throughput by 35% with zero data‑consistency issues." ]
+  } ],
+  "projects" : [ {
+    "name" : "Clothify Shopping Application",
+    "technologies" : "Java, Spring Boot, Hibernate, PostgreSQL, React.js, gRPC, Kafka, Docker, Kubernetes, AWS",
+    "url" : "GitHub",
+    "bullets" : [ "Distributed Microservices Design: Built a scalable e‑commerce backend with API Gateway routing, Eureka service discovery, and LLD‑driven domain separation across product, user, and order services.", "Event‑Driven & Cloud‑Native Deployment: Engineered low‑latency gRPC + Kafka‑based async communication with JWT security; containerized and deployed on Kubernetes (AWS EC2) via Jenkins CI/CD, sustaining 100+ concurrent users with 30% latency reduction." ]
+  } ],
+  "education" : [ {
+    "institution" : "Motihari College of Engineering, Motihari",
+    "degree" : "B.Tech",
+    "field" : "Computer Science and Engineering (CSE)",
+    "startDate" : "Oct 2020",
+    "endDate" : "Aug 2024",
+    "gpa" : "9.0 / 10"
+  } ],
+  "certifications" : [ ],
+  "achievements" : [ "Solved 1000+ algorithmic problems across LeetCode and GeeksForGeeks; strong depth in Graphs, Trees, Dynamic Programming, Greedy, and Backtracking.", "Global Rank 14 in CodeChef Starters 67 among 10,000+ participants — top 0.014% globally." ]
+}

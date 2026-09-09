@@ -43,7 +43,7 @@ async def lifespan(app: FastAPI):
 
     # Initialize routers with agents
     chat.init_router(orchestrator)
-    resume.init_router(resume_agent)
+    resume.init_router(resume_agent, job_agent)   # job_agent needed for §18 Step A
     job.init_router(job_agent, match_agent)
 
     logger.info("All agents initialized successfully")

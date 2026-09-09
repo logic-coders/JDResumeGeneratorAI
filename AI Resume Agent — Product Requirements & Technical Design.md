@@ -574,6 +574,10 @@ Or:
 
 # 18. `/resume` Workflow
 
+Every call to `/resume` MUST run the following **mandatory 4-step pipeline** from scratch.
+No step may be skipped. No prior job's selection, bullets, or skills section may be reused.
+If Step A fails, generation must stop — the system must NOT fall back to reusing the master resume.
+
 ```text
 Receive Job URL
        │
@@ -581,22 +585,40 @@ Receive Job URL
 Extract Job Description
        │
        ▼
-Load Master Resume
+Parse Job → Structured Job JSON
        │
        ▼
-Analyze Compatibility
+┌──────────────────────────────────────────────────────────┐
+│              §18 MANDATORY GENERATION PIPELINE           │
+│                                                          │
+│  Step A — Extract Target Role                            │
+│    Pull: job title, seniority, domain,                   │
+│          required skills, preferred skills,              │
+│          key responsibilities, ATS keywords.             │
+│    ⚠ If Step A fails → STOP. Do not generate resume.     │
+│                    │                                     │
+│                    ▼                                     │
+│  Step B — Select Experience & Projects                   │
+│    Re-score the ENTIRE verified pool against             │
+│    the Step A TargetRole — every single call.            │
+│    Never reuse a prior job's content selection.          │
+│                    │                                     │
+│                    ▼                                     │
+│  Step C — Rewrite Bullet Points                          │
+│    Reframe each selected entry's bullets toward          │
+│    this role's emphasis. Facts are immutable.            │
+│    No new bullets may be invented.                       │
+│                    │                                     │
+│                    ▼                                     │
+│  Step D — Build Skills Section from the JD               │
+│    Include ONLY JD required/preferred skills             │
+│    that the user actually has, plus ≤ 2 closely          │
+│    related skills from their verified pool.              │
+│    Never dump the full master skill list.                │
+└──────────────────────────────────────────────────────────┘
        │
        ▼
-Generate Match Report
-       │
-       ▼
-Show Analysis to User
-       │
-       ▼
-User Confirms Generation
-       │
-       ▼
-Generate Customized Resume
+§18.5 Regression Checks (see below)
        │
        ▼
 Generate LaTeX
@@ -609,6 +631,38 @@ Save Locally
 ```
 
 ---
+
+# 18.5. Regression Checks
+
+These are **explicit rejection rules** that act as the direct guard against the
+"same resume every time" bug. Both checks run after Step D, before LaTeX generation.
+
+## Check 1 — Byte-Identity Guard
+
+```text
+IF fingerprint(generated_resume) == previousResumeFingerprint
+    THEN reject generation with HTTP 409
+    REASON: The content selection is not role-specific.
+```
+
+- The caller (Java backend) stores the SHA-256 fingerprint of the last generated resume per user.
+- It passes this fingerprint as `previousResumeFingerprint` on the next generation request.
+- If the newly generated resume has an identical fingerprint (same content for a different role),
+  generation is rejected and the pipeline does not produce a PDF.
+
+## Check 2 — Skills-Copy Guard
+
+```text
+IF skills(generated_resume) == skills(master_resume)
+    THEN reject with RuntimeError
+    REASON: Step D did not apply JD-scoping — the full master list was dumped.
+```
+
+- The AI service compares every category (languages, frameworks, databases, cloud, tools).
+- If all categories are identical between the generated and master skills sections, Step D failed.
+- This is caught at the Python layer before the resume reaches the LaTeX compiler.
+
+
 
 # 19. `/analyze` Command
 
