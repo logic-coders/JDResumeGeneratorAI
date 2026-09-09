@@ -1,0 +1,12 @@
+{
+  "jobId" : "",
+  "company" : "Carousell Group",
+  "jobTitle" : "",
+  "location" : "",
+  "description" : "Design, build and maintain core backend platform which includes microservice framework, libraries, asynchronous inter-service communication, media handling, etc. Proactively work with engineering teams, identify gaps and work with your to address it. Effectively communicate these with stakeholders and propose/implement solutions. Ensure high availability and application security of services Set high standards of engineering design and code quality Utilize AI agents to automate repetitive coding tasks and generate comprehensive test suites, accelerating development cycles. Employ AI-powered tools for code analysis and vulnerability detection to proactively strengthen system security. Integrate AI-driven insights into performance monitoring to identify and address potential bottlenecks efficiently.",
+  "responsibilities" : [ "Design, build and maintain core backend platform which includes microservice framework, libraries, asynchronous inter-service communication, media handling, etc.", "Proactively work with engineering teams, identify gaps and work with your to address it.", "Effectively communicate these with stakeholders and propose/implement solutions.", "Ensure high availability and application security of services", "Set high standards of engineering design and code quality", "Utilize AI agents to automate repetitive coding tasks and generate comprehensive test suites, accelerating development cycles.", "Employ AI-powered tools for code analysis and vulnerability detection to proactively strengthen system security.", "Integrate AI-driven insights into performance monitoring to identify and address potential bottlenecks efficiently." ],
+  "requiredSkills" : [ "Experience working with microservice architecture", "Exposure to consumer scale systems", "Strong knowledge of modern technologies", "Hands on coding experience with either Go, C++, python or Java", "Experience working in Cloud environment", "Strong knowledge of engineering fundamentals", "Ability to speak and write succinctly and clearly" ],
+  "preferredSkills" : [ "Exposure working with Kubernetes", "Exposure working with Service Mesh architecture", "Experience working with gRPC", "Experience working with protobuf", "Experience working with datastores (cassandra, postgresql, Elasticsearch)", "Experience working with Message Queuing (Kafka)", "Experience working with Backstage" ],
+  "minimumExperience" : "2+ years",
+  "educationRequirements" : [ ]
+}

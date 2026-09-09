@@ -34,13 +34,13 @@ export default function ResumePreview({ data }: ResumePreviewProps) {
               <h4 className="text-sm font-medium text-[var(--color-accent)]">{sug.section}</h4>
               <p className="text-sm text-[var(--color-foreground)] mt-1">{sug.suggestion}</p>
               {sug.original && (
-                <div className="mt-2 text-xs text-red-400 line-through opacity-70">
-                  {sug.original}
+                <div className="mt-2 text-xs text-red-400 line-through opacity-70 whitespace-pre-wrap">
+                  {typeof sug.original === 'object' ? JSON.stringify(sug.original, null, 2) : String(sug.original)}
                 </div>
               )}
               {sug.improved && (
-                <div className="mt-1 text-xs text-green-400">
-                  {sug.improved}
+                <div className="mt-1 text-xs text-green-400 whitespace-pre-wrap">
+                  {typeof sug.improved === 'object' ? JSON.stringify(sug.improved, null, 2) : String(sug.improved)}
                 </div>
               )}
             </div>
