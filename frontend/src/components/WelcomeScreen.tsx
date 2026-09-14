@@ -10,8 +10,9 @@ export default function WelcomeScreen() {
     sendMessage({ message: '/init' });
   };
 
-  const isCompleted = onboardingState?.status === 'COMPLETED';
+  const isCompleted  = !onboardingState || onboardingState.status === 'COMPLETED';
   const isInProgress = onboardingState?.status === 'IN_PROGRESS';
+  const isNotStarted = onboardingState?.status === 'NEW';
 
   return (
     <div className="flex flex-col items-center justify-center h-full text-center px-4 animate-fade-in">
@@ -28,7 +29,8 @@ export default function WelcomeScreen() {
         analyze job descriptions, and tailor your resume for specific roles.
       </p>
 
-      {!isCompleted && (
+      {/* Show setup card only when onboarding is explicitly NOT started or IN_PROGRESS */}
+      {(isNotStarted || isInProgress) && (
         <div className="glass-card p-6 rounded-xl max-w-md w-full">
           <h2 className="text-xl font-semibold text-white mb-2">
             {isInProgress ? 'Resume Profile Setup' : 'Let\'s get started'}
@@ -48,6 +50,7 @@ export default function WelcomeScreen() {
         </div>
       )}
 
+      {/* Show quick actions when completed (or while loading — avoids flash of setup card) */}
       {isCompleted && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl w-full text-left">
           <div className="glass-card p-5 rounded-xl cursor-pointer hover:bg-[var(--color-secondary)] transition-colors"
@@ -63,8 +66,23 @@ export default function WelcomeScreen() {
             <h3 className="font-semibold text-white mb-1">Analyze Job Match</h3>
             <p className="text-xs text-[var(--color-muted-foreground)]">See how well your master resume matches a job</p>
           </div>
+
+          <div className="glass-card p-5 rounded-xl cursor-pointer hover:bg-[var(--color-secondary)] transition-colors"
+               onClick={() => sendMessage({ message: '/improve' })}>
+            <div className="text-xl mb-2">✨</div>
+            <h3 className="font-semibold text-white mb-1">Improve Resume</h3>
+            <p className="text-xs text-[var(--color-muted-foreground)]">Let AI enhance your master resume with better language</p>
+          </div>
+
+          <div className="glass-card p-5 rounded-xl cursor-pointer hover:bg-[var(--color-secondary)] transition-colors"
+               onClick={() => sendMessage({ message: '/status' })}>
+            <div className="text-xl mb-2">📊</div>
+            <h3 className="font-semibold text-white mb-1">View Status</h3>
+            <p className="text-xs text-[var(--color-muted-foreground)]">Check your profile completeness and resume health</p>
+          </div>
         </div>
       )}
     </div>
   );
 }
+

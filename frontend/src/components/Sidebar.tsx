@@ -14,11 +14,13 @@ import {
 } from 'lucide-react';
 import GeneratedResumesModal from './GeneratedResumesModal';
 import SettingsModal from './SettingsModal';
+import ResumeEditorModal from './ResumeEditorModal';
 import * as api from '../lib/api';
 
 export default function Sidebar() {
   const [isGeneratedModalOpen, setIsGeneratedModalOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [generatedCount, setGeneratedCount] = useState<number>(0);
 
   const fetchGeneratedCount = async () => {
@@ -86,7 +88,7 @@ export default function Sidebar() {
             My Resume
           </h3>
           <button 
-            onClick={() => sendMessage({ message: '/profile' })}
+            onClick={() => setIsEditorOpen(true)}
             className="w-full flex items-center gap-2 p-2 rounded-md hover:bg-[var(--color-secondary)] transition-colors text-sm text-left"
           >
             <FileText size={16} className="text-yellow-500" />
@@ -163,6 +165,11 @@ export default function Sidebar() {
           fetchGeneratedCount();
         }}
         onCountChange={fetchGeneratedCount}
+      />
+
+      <ResumeEditorModal
+        isOpen={isEditorOpen}
+        onClose={() => setIsEditorOpen(false)}
       />
 
       <SettingsModal
