@@ -13,6 +13,8 @@ interface SlashCommandMenuProps {
 export default function SlashCommandMenu({ query, onSelect, onClose, position }: SlashCommandMenuProps) {
   const [selectedIndex, setSelectedIndex] = React.useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const itemRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   // Filter commands based on query (everything after the '/')
   const filteredCommands = SLASH_COMMANDS.filter((c) => 
@@ -33,6 +35,21 @@ export default function SlashCommandMenu({ query, onSelect, onClose, position }:
   useEffect(() => {
     setSelectedIndex(0);
   }, [query]);
+
+  // Focus the scroll container on mount so touchpad scroll works natively
+  useEffect(() => {
+    scrollContainerRef.current?.focus();
+  }, []);
+
+  // Scroll selected item into view
+  useEffect(() => {
+    const selectedCmd = flatCommands[selectedIndex];
+    if (selectedCmd) {
+      itemRefs.current[selectedCmd.command]?.scrollIntoView({
+        block: 'nearest',
+      });
+    }
+  }, [selectedIndex, flatCommands]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -89,7 +106,11 @@ export default function SlashCommandMenu({ query, onSelect, onClose, position }:
       <div className="p-2 border-b border-[var(--color-panel-border)] bg-[#1e293b] text-xs text-[var(--color-muted-foreground)] font-medium">
         Commands
       </div>
-      <div className="overflow-y-auto p-1 flex-1">
+      <div 
+        ref={scrollContainerRef}
+        tabIndex={-1}
+        className="overflow-y-auto p-1 flex-1 outline-none"
+      >
         {Object.entries(groupedCommands).map(([category, cmds]) => (
           <div key={category} className="mb-2 last:mb-0">
             <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-[var(--color-muted-foreground)] font-semibold mt-1">
@@ -101,6 +122,9 @@ export default function SlashCommandMenu({ query, onSelect, onClose, position }:
               
               return (
                 <button
+                  ref={(el) => {
+                    itemRefs.current[cmd.command] = el;
+                  }}
                   key={cmd.command}
                   className={`w-full text-left px-3 py-2 rounded-md flex items-center gap-3 transition-colors ${
                     isSelected 

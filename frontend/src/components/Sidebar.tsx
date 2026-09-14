@@ -13,10 +13,12 @@ import {
   Folder
 } from 'lucide-react';
 import GeneratedResumesModal from './GeneratedResumesModal';
+import SettingsModal from './SettingsModal';
 import * as api from '../lib/api';
 
 export default function Sidebar() {
   const [isGeneratedModalOpen, setIsGeneratedModalOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [generatedCount, setGeneratedCount] = useState<number>(0);
 
   const fetchGeneratedCount = async () => {
@@ -145,7 +147,10 @@ export default function Sidebar() {
       </div>
 
       <div className="p-4 border-t border-[var(--color-panel-border)]">
-        <button className="w-full flex items-center gap-2 p-2 rounded-md hover:bg-[var(--color-secondary)] transition-colors text-sm text-left text-[var(--color-muted-foreground)] hover:text-white">
+        <button
+          onClick={() => setIsSettingsOpen(true)}
+          className="w-full flex items-center gap-2 p-2 rounded-md hover:bg-[var(--color-secondary)] transition-colors text-sm text-left text-[var(--color-muted-foreground)] hover:text-white"
+        >
           <Settings size={18} />
           Settings
         </button>
@@ -158,6 +163,11 @@ export default function Sidebar() {
           fetchGeneratedCount();
         }}
         onCountChange={fetchGeneratedCount}
+      />
+
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
       />
     </div>
   );
