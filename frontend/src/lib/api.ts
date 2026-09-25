@@ -148,6 +148,11 @@ export async function getMasterResume(): Promise<Resume | null> {
   }
 }
 
+export function getMasterResumePdfUrl(): string {
+  const userId = getUserId();
+  return `${API_BASE}/api/resumes/master/pdf?userId=${encodeURIComponent(userId)}`;
+}
+
 export async function getGeneratedResumes(): Promise<GeneratedResumeItem[]> {
   return apiFetch('/api/resumes/generated');
 }

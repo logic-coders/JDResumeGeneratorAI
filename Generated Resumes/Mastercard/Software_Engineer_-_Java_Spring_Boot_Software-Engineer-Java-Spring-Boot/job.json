@@ -1,0 +1,12 @@
+{
+  "jobId" : "",
+  "company" : "Mastercard",
+  "jobTitle" : "Software Engineer - Java Spring Boot",
+  "location" : "",
+  "description" : "Payments Network Technology is seeking a software engineer to design, build, and support secure, scalable, and highly available payment-network solutions using Java, Spring Boot, Kafka, event-driven architecture, and cloud-native engineering practices.",
+  "responsibilities" : [ "Design, develop, test, deploy, and support software services based on technical and functional requirements.", "Build Java and Spring Boot microservices, REST APIs, and Kafka-based event-driven integrations.", "Apply object-oriented design, SOLID principles, reusable patterns, and secure coding practices.", "Create unit, component, integration, and regression tests and participate in peer reviews.", "Troubleshoot application, data, messaging, performance, and production issues.", "Contribute to CI/CD, observability, operational readiness, resiliency, and automation.", "Collaborate with product, architecture, testing, operations, and dependent engineering teams.", "Guide less-experienced team members and independently own complex work from analysis through production support." ],
+  "requiredSkills" : [ "Hands-on Java and Spring Boot development experience.", "Experience with microservices, REST APIs, Kafka or similar messaging platforms, and event-driven architecture.", "Knowledge of SQL or NoSQL databases, Git, automated testing, CI/CD, containers, and cloud-native platforms.", "Understanding of secure, scalable, resilient, and observable software design.", "Experience working in Agile delivery environments and across the software development lifecycle.", "Clear communication, collaboration, problem-solving, and stakeholder-management skills.", "Ability to work with globally distributed product, engineering, architecture, operations, and business teams.", "Hands-on experience using AI-assisted engineering tools, including GitHub Copilot and Claude CLI, to improve engineering efficiency is required." ],
+  "preferredSkills" : [ "Payments or financial-services domain knowledge is preferred." ],
+  "minimumExperience" : "",
+  "educationRequirements" : [ "Bachelor's degree in computer science, information technology, engineering, or a related discipline, or equivalent practical experience." ]
+}

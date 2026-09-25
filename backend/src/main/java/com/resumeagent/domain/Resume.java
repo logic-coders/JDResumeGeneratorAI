@@ -75,6 +75,8 @@ public class Resume {
         private List<String> tools = new ArrayList<>();
         @Builder.Default
         private List<String> methodologies = new ArrayList<>();
+        @Builder.Default
+        private List<String> aiml = new ArrayList<>();
     }
 
     @Data

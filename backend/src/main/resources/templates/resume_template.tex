@@ -1,4 +1,4 @@
-\documentclass[10pt, letterpaper]{article}
+\documentclass[11pt, letterpaper]{article}
 
 % Packages:
 \usepackage[
@@ -41,7 +41,7 @@
 
 % Sections formatting
 \titleformat{\section}{\Large\bfseries\color{primaryColor}}{}{0em}{}[\titlerule]
-\titlespacing*{\section}{0pt}{1.5ex plus 1ex minus .2ex}{1ex plus .2ex}
+\titlespacing*{\section}{0pt}{8pt}{8pt}
 
 % Custom commands
 \newcommand{\resumeItem}[1]{
@@ -52,16 +52,17 @@
 
 \newcommand{\resumeSubheading}[4]{
   \vspace{-2pt}\item
-    \begin{tabular*}{1.0\textwidth}[t]{l@{\extracolsep{\fill}}r}
-      \textbf{#1} & \textbf{\small #2} \\
-      \textit{\small#3} & \textit{\small #4} \\
+    \begin{tabular*}{1.0\textwidth}[t]{@{}l@{\extracolsep{\fill}}r@{}}
+      \textbf{\large #1} & \small #2 \\
+      \small #3 & \textit{\small #4} \\
     \end{tabular*}\vspace{-7pt}
 }
 
-\newcommand{\resumeProjectHeading}[2]{
-    \item
-    \begin{tabular*}{1.0\textwidth}{l@{\extracolsep{\fill}}r}
-      \small#1 & \textbf{\small #2} \\
+\newcommand{\resumeProjectHeading}[4]{
+  \vspace{-2pt}\item
+    \begin{tabular*}{1.0\textwidth}[t]{@{}l@{\extracolsep{\fill}}r@{}}
+      \textbf{\large #1} & \small #2 \\
+      \small #3 & \textit{\small #4} \\
     \end{tabular*}\vspace{-7pt}
 }
 
@@ -69,8 +70,10 @@
 \renewcommand\labelitemii{$\vcenter{\hbox{\tiny$\bullet$}}$}
 \newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0.0in, label={}]}
 \newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
-\newcommand{\resumeItemListStart}{\begin{itemize}[leftmargin=0.15in]}
-\newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-5pt}}
+\newcommand{\resumeItemListStart}{\begin{itemize}[leftmargin=0.5cm]}
+\newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-2pt}}
+\newcommand{\resumeAchievementListStart}{\begin{itemize}[leftmargin=0.5cm, itemsep=-2pt]}
+\newcommand{\resumeAchievementListEnd}{\end{itemize}\vspace{-2pt}}
 
 \pagestyle{empty} % No headers/footers
 
@@ -79,7 +82,7 @@
 %----------HEADING----------
 \begin{center}
     {\Huge \bfseries <<NAME>>} \\ \vspace{5pt}
-    <<LOCATION>> \\ \vspace{5pt}
+    <<LOCATION_BLOCK>>
     \small \faPhone* <<PHONE>> ~ 
     \href{mailto:<<EMAIL>>}{\faEnvelope~<<EMAIL>>} ~ 
     <<LINKEDIN>>
@@ -98,6 +101,12 @@
 
 %-----------SKILLS-----------
 <<SKILLS_SECTION>>
+
+%-----------ACHIEVEMENTS-----------
+<<ACHIEVEMENTS_SECTION>>
+
+%-----------CERTIFICATIONS-----------
+<<CERTIFICATIONS_SECTION>>
 
 %-----------EDUCATION-----------
 <<EDUCATION_SECTION>>

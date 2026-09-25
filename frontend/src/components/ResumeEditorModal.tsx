@@ -5,7 +5,8 @@ import { createPortal } from 'react-dom';
 import {
   X, Plus, Trash2, ChevronDown, ChevronUp, Save,
   Briefcase, Code2, Wrench, GraduationCap, Award,
-  Star, FileText, Check, Loader2, GripVertical, Edit3
+  Star, FileText, Check, Loader2, GripVertical, Edit3,
+  Eye, EyeOff, Download
 } from 'lucide-react';
 import * as api from '../lib/api';
 import type { Resume, Experience, Project, Education, Skills } from '../lib/types';
@@ -18,18 +19,19 @@ const NAV: { id: Section; label: string; icon: React.ReactNode }[] = [
   { id: 'experience',     label: 'Experience',     icon: <Briefcase size={15} /> },
   { id: 'projects',       label: 'Projects',       icon: <Code2 size={15} /> },
   { id: 'skills',         label: 'Skills',         icon: <Wrench size={15} /> },
-  { id: 'education',      label: 'Education',      icon: <GraduationCap size={15} /> },
-  { id: 'certifications', label: 'Certifications', icon: <Award size={15} /> },
   { id: 'achievements',   label: 'Achievements',   icon: <Star size={15} /> },
+  { id: 'certifications', label: 'Certifications', icon: <Award size={15} /> },
+  { id: 'education',      label: 'Education',      icon: <GraduationCap size={15} /> },
 ];
 
-const SKILL_CATEGORIES: (keyof Skills)[] = ['languages', 'frameworks', 'databases', 'cloud', 'tools'];
+const SKILL_CATEGORIES: (keyof Skills)[] = ['languages', 'frameworks', 'databases', 'cloud', 'tools', 'aiml'];
 const SKILL_LABELS: Record<keyof Skills, string> = {
   languages: 'Languages',
   frameworks: 'Frameworks & Libraries',
   databases: 'Databases',
   cloud: 'Cloud & DevOps',
   tools: 'Tools',
+  aiml: 'AI/LLM Engineering',
 };
 
 // ─── Empty factories ──────────────────────────────────────────────
@@ -39,7 +41,7 @@ const emptyEdu   = (): Education  => ({ institution: '', degree: '', field: '', 
 const emptyResume = (): Resume    => ({
   experience: [], projects: [], education: [],
   certifications: [], achievements: [],
-  skills: { languages: [], frameworks: [], databases: [], cloud: [], tools: [] },
+  skills: { languages: [], frameworks: [], databases: [], cloud: [], tools: [], aiml: [] },
 });
 
 // ─── Props ────────────────────────────────────────────────────────
@@ -52,6 +54,7 @@ export default function ResumeEditorModal({ isOpen, onClose }: Props) {
   const [loading, setLoading]   = useState(false);
   const [saving, setSaving]     = useState<Section | null>(null);
   const [toast, setToast]       = useState<{ msg: string; ok: boolean } | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
 
   // Load on open
   useEffect(() => {
@@ -171,9 +174,9 @@ export default function ResumeEditorModal({ isOpen, onClose }: Props) {
           top: '50%', left: '50%',
           transform: 'translate(-50%, -50%)',
           zIndex: 9999,
-          width: 860,
+          width: showPreview ? 1320 : 860,
           maxWidth: 'calc(100vw - 32px)',
-          height: 600,
+          height: showPreview ? 'calc(100vh - 48px)' : 600,
           maxHeight: 'calc(100vh - 48px)',
           display: 'flex',
           background: '#1e1e1e',
@@ -181,6 +184,7 @@ export default function ResumeEditorModal({ isOpen, onClose }: Props) {
           border: '1px solid #333',
           boxShadow: '0 32px 80px rgba(0,0,0,0.85)',
           overflow: 'hidden',
+          transition: 'width 0.3s ease, height 0.3s ease',
         }}
       >
         {/* ── Left nav ──────────────────────────────────────── */}
@@ -237,6 +241,38 @@ export default function ResumeEditorModal({ isOpen, onClose }: Props) {
               </div>
             </div>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              {/* Preview toggle */}
+              <button
+                onClick={() => setShowPreview(p => !p)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '7px 16px', borderRadius: 8,
+                  background: showPreview ? '#3b82f622' : '#2a2a2a',
+                  border: showPreview ? '1px solid #3b82f644' : '1px solid #333',
+                  color: showPreview ? '#60a5fa' : '#888',
+                  fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+              >
+                {showPreview ? <EyeOff size={13} /> : <Eye size={13} />}
+                {showPreview ? 'Hide Preview' : 'Preview'}
+              </button>
+              {/* Download button */}
+              <button
+                onClick={() => window.open(api.getMasterResumePdfUrl(), '_blank')}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '7px 16px', borderRadius: 8,
+                  background: '#2a2a2a', border: '1px solid #333', color: '#ccc',
+                  fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+                onMouseOver={(e) => { e.currentTarget.style.background = '#333'; e.currentTarget.style.color = '#fff'; }}
+                onMouseOut={(e) => { e.currentTarget.style.background = '#2a2a2a'; e.currentTarget.style.color = '#ccc'; }}
+              >
+                <Download size={13} />
+                Download PDF
+              </button>
               {/* Save section button */}
               <button
                 onClick={() => saveSection(section)}
@@ -420,6 +456,34 @@ export default function ResumeEditorModal({ isOpen, onClose }: Props) {
             )}
           </div>
         </div>
+
+        {/* ── Preview panel ─────────────────────────────── */}
+        {showPreview && (
+          <div style={{
+            width: 460, flexShrink: 0,
+            borderLeft: '1px solid #2a2a2a',
+            display: 'flex', flexDirection: 'column',
+            background: '#fafafa',
+            overflow: 'hidden',
+          }}>
+            <div style={{
+              padding: '12px 16px',
+              borderBottom: '1px solid #e5e5e5',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              background: '#f0f0f0',
+              flexShrink: 0,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Eye size={14} color="#3b82f6" />
+                <span style={{ fontSize: 12, fontWeight: 700, color: '#333', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Live Preview</span>
+              </div>
+              <span style={{ fontSize: 10, color: '#888' }}>Updates as you type</span>
+            </div>
+            <div style={{ flex: 1, overflowY: 'auto', padding: '24px 20px' }}>
+              <MasterResumePreviewPanel resume={resume} />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Toast */}
@@ -595,6 +659,203 @@ function SkillCategory({ label, items, onChange }: { label: string; items: strin
           Add
         </button>
       </div>
+    </div>
+  );
+}
+
+// ─── Master Resume Preview Panel ──────────────────────────────────
+function MasterResumePreviewPanel({ resume }: { resume: Resume }) {
+  const pi = resume.personalInfo;
+  const hasPersonalInfo = pi && (pi.name || pi.email || pi.phone);
+  const hasSummary = resume.summary && resume.summary.trim();
+  const hasExperience = resume.experience?.length > 0;
+  const hasProjects = resume.projects?.length > 0;
+  const hasSkills = resume.skills && Object.values(resume.skills).some(arr => arr?.length > 0);
+  const hasEducation = resume.education?.length > 0;
+  const hasCerts = resume.certifications?.length > 0;
+  const hasAchievements = resume.achievements?.length > 0;
+  const isEmpty = !hasPersonalInfo && !hasSummary && !hasExperience && !hasProjects && !hasSkills && !hasEducation && !hasCerts && !hasAchievements;
+
+  if (isEmpty) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#999', textAlign: 'center', padding: 20 }}>
+        <FileText size={40} color="#ccc" />
+        <div style={{ fontSize: 14, fontWeight: 600, marginTop: 12, color: '#666' }}>No resume data yet</div>
+        <div style={{ fontSize: 12, marginTop: 4 }}>Add your details using the editor on the left</div>
+      </div>
+    );
+  }
+
+  const sectionTitle: React.CSSProperties = {
+    fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
+    letterSpacing: '0.1em', color: '#1a1a1a',
+    borderBottom: '1.5px solid #1a1a1a', paddingBottom: 3,
+    marginBottom: 8, marginTop: 16,
+  };
+  const bulletStyle: React.CSSProperties = {
+    fontSize: 10, color: '#333', lineHeight: 1.55,
+    paddingLeft: 12, position: 'relative', marginBottom: 2,
+  };
+  const dotStyle: React.CSSProperties = {
+    position: 'absolute', left: 0, top: 0, color: '#555',
+  };
+
+  return (
+    <div style={{
+      background: 'white', border: '1px solid #ddd',
+      borderRadius: 4, padding: '28px 24px',
+      fontFamily: "'Times New Roman', 'Georgia', serif",
+      color: '#1a1a1a', lineHeight: 1.4,
+      boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+      minHeight: 600,
+    }}>
+      {/* ── Name & Contact ──────────────────── */}
+      {hasPersonalInfo && (
+        <div style={{ textAlign: 'center', marginBottom: 8 }}>
+          {pi?.name && <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: '0.04em' }}>{pi.name}</div>}
+          <div style={{ fontSize: 9, color: '#555', display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 6, marginTop: 4 }}>
+            {pi?.email && <span>{pi.email}</span>}
+            {pi?.phone && <><span>•</span><span>{pi.phone}</span></>}
+            {pi?.location && <><span>•</span><span>{pi.location}</span></>}
+            {pi?.linkedin && <><span>•</span><a href={pi.linkedin.startsWith('http') ? pi.linkedin : `https://${pi.linkedin}`} target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6', textDecoration: 'none' }}>LinkedIn</a></>}
+            {pi?.github && <><span>•</span><a href={pi.github.startsWith('http') ? pi.github : `https://${pi.github}`} target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6', textDecoration: 'none' }}>GitHub</a></>}
+          </div>
+        </div>
+      )}
+
+      {/* ── Summary ───────────────────────── */}
+      {hasSummary && (
+        <>
+          <div style={sectionTitle}>Summary</div>
+          <div style={{ fontSize: 10, color: '#333', lineHeight: 1.6 }}>{resume.summary}</div>
+        </>
+      )}
+
+      {/* ── Experience ────────────────────── */}
+      {hasExperience && (
+        <>
+          <div style={sectionTitle}>Experience</div>
+          {resume.experience.map((exp, i) => (
+            <div key={i} style={{ marginBottom: 10 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                <div>
+                  <span style={{ fontSize: 11, fontWeight: 700 }}>{exp.company || 'Company'}</span>
+                  {exp.location && <span style={{ fontSize: 10, color: '#555' }}> — {exp.location}</span>}
+                </div>
+                <span style={{ fontSize: 9, color: '#666', flexShrink: 0 }}>
+                  {exp.startDate}{exp.endDate ? ` — ${exp.endDate}` : ''}
+                </span>
+              </div>
+              {exp.title && <div style={{ fontSize: 10, fontStyle: 'italic', color: '#444', marginBottom: 3 }}>{exp.title}</div>}
+              {exp.bullets?.map((b, bi) => b.trim() ? (
+                <div key={bi} style={bulletStyle}>
+                  <span style={dotStyle}>•</span>
+                  {b}
+                </div>
+              ) : null)}
+            </div>
+          ))}
+        </>
+      )}
+
+      {/* ── Projects ──────────────────────── */}
+      {hasProjects && (
+        <>
+          <div style={sectionTitle}>Projects</div>
+          {resume.projects.map((proj, i) => (
+            <div key={i} style={{ marginBottom: 10 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                <div>
+                  <span style={{ fontSize: 11, fontWeight: 700 }}>{proj.name || 'Project'}</span>
+                </div>
+                {proj.url && (
+                  <a
+                    href={proj.url.startsWith('http') ? proj.url : `https://${proj.url}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ fontSize: 9, color: '#3b82f6', textDecoration: 'none', fontWeight: 600, flexShrink: 0 }}
+                  >
+                    GitHub ↗
+                  </a>
+                )}
+              </div>
+              {proj.technologies && <div style={{ fontSize: 10, fontStyle: 'italic', color: '#444', marginBottom: 3 }}>{proj.technologies}</div>}
+              {proj.bullets?.map((b, bi) => b.trim() ? (
+                <div key={bi} style={bulletStyle}>
+                  <span style={dotStyle}>•</span>
+                  {b}
+                </div>
+              ) : null)}
+            </div>
+          ))}
+        </>
+      )}
+
+      {/* ── Skills ────────────────────────── */}
+      {hasSkills && (
+        <>
+          <div style={sectionTitle}>Technical Skills</div>
+          <div style={{ fontSize: 10, color: '#333', lineHeight: 1.7 }}>
+            {Object.entries(resume.skills || {}).map(([cat, items]) => {
+              if (!items || items.length === 0) return null;
+              const label = SKILL_LABELS[cat as keyof Skills] || cat;
+              return (
+                <div key={cat} style={{ marginBottom: 2 }}>
+                  <span style={{ fontWeight: 700 }}>{label}:</span>{' '}
+                  <span>{items.join(', ')}</span>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
+
+      {/* ── Achievements ──────────────────── */}
+      {hasAchievements && (
+        <>
+          <div style={sectionTitle}>Achievements</div>
+          {resume.achievements.map((a, i) => a.trim() ? (
+            <div key={i} style={bulletStyle}>
+              <span style={dotStyle}>•</span>
+              {a}
+            </div>
+          ) : null)}
+        </>
+      )}
+
+      {/* ── Certifications ────────────────── */}
+      {hasCerts && (
+        <>
+          <div style={sectionTitle}>Certifications</div>
+          {resume.certifications.map((c, i) => c.trim() ? (
+            <div key={i} style={bulletStyle}>
+              <span style={dotStyle}>•</span>
+              {c}
+            </div>
+          ) : null)}
+        </>
+      )}
+
+      {/* ── Education ─────────────────────── */}
+      {hasEducation && (
+        <>
+          <div style={sectionTitle}>Education</div>
+          {resume.education.map((edu, i) => (
+            <div key={i} style={{ marginBottom: 8 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                <span style={{ fontSize: 11, fontWeight: 700 }}>{edu.institution || 'Institution'}</span>
+                <span style={{ fontSize: 9, color: '#666', flexShrink: 0 }}>
+                  {edu.startDate}{edu.endDate ? ` — ${edu.endDate}` : ''}
+                </span>
+              </div>
+              <div style={{ fontSize: 10, fontStyle: 'italic', color: '#444' }}>
+                {[edu.degree, edu.field].filter(Boolean).join(' in ')}
+                {edu.gpa && <span style={{ color: '#666' }}> — GPA: {edu.gpa}</span>}
+              </div>
+            </div>
+          ))}
+        </>
+      )}
     </div>
   );
 }

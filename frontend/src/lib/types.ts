@@ -105,6 +105,7 @@ export interface Skills {
   databases: string[];
   cloud: string[];
   tools: string[];
+  aiml: string[];
 }
 
 export interface Experience {
