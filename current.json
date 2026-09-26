@@ -1,0 +1,55 @@
+{
+  "personalInfo" : {
+    "name" : "Chandan Kumar Singh",
+    "email" : "cs.sde07@gmail.com",
+    "phone" : "+91-6200952129",
+    "location" : "",
+    "linkedin" : "LinkedIn",
+    "github" : "GitHub",
+    "leetcode" : "LeetCode"
+  },
+  "summary" : "Software Engineer with 2 year of experience building scalable, distributed microservices (Java, Spring Boot, Kafka, AWS); reduced API latency by 40–50% via caching and messaging optimisations on a production-grade e-commerce platform. Strong DSA foundation (1000+ problems solved) with CodeChef Global Rank 14.",
+  "skills" : {
+    "languages" : [ "Java", "Python", "C++", "SQL", "JavaScript", "TypeScript" ],
+    "frameworks" : [ "Spring Boot", "Spring Security", "Hibernate", "FastAPI", "React.js", "Kafka", "REST API" ],
+    "databases" : [ "MySQL", "PostgreSQL", "Redis", "FAISS", "ChromaDB" ],
+    "cloud" : [ "AWS (EC2, S3)", "Docker", "Kubernetes", "Jenkins" ],
+    "tools" : [ "Git", "GitHub", "SVN", "IntelliJ IDEA", "Postman" ],
+    "methodologies" : [ ],
+    "aiml" : [ "LangChain", "RAG Pipelines", "Vector Search", "Prompt Engineering", "Claude CLI", "Agent" ]
+  },
+  "experience" : [ {
+    "company" : "Tata Consultancy Services",
+    "title" : "Software Engineer — Java, Spring Boot, Microservices",
+    "location" : "",
+    "startDate" : "Jan 2025",
+    "endDate" : "Present",
+    "bullets" : [ "Designed and owned RESTful APIs for business-critical banking workflows, reducing average response latency by 40% through service-layer optimizations (caching, query tuning, async processing).", "Architected a centralised API Gateway with secret-key authentication and refresh-token rotation, cutting inter-service authentication overhead by 60% and improving distributed system reliability.", "Built secure integrations with external banking systems using AES-256 encryption and defensive controls against MITM, Replay, and Request Tampering attacks, with no reported security incidents in production.", "Owned end-to-end delivery of internal automation tooling, eliminating 64% of manual operational effort and improving release velocity.", "Developed a bulk upload pipeline for concurrent ingestion of thousands of records per request, improving throughput by 35% with zero data-consistency issues." ]
+  } ],
+  "projects" : [ {
+    "name" : "Clothify Shopping Application",
+    "technologies" : "Java, Spring Boot, Hibernate, PostgreSQL, Redis, Kafka, Docker, Kubernetes, AWS",
+    "url" : "https://github.com/Enterprise-Work/Sangam-Enterprise",
+    "bullets" : [ "Designed and built an e-commerce platform using microservices architecture following SOLID principles, with clean RESTful API contracts enabling independent development and deployment across services.", "Implemented the SAGA pattern with event-driven architecture (Kafka) to manage distributed transactions across Order, Payment, and Inventory services — ensuring data consistency via compensating transactions on failure (e.g., automatic inventory rollback if payment fails).", "Engineered fault-tolerant inter-service communication using Feign Client with the Circuit Breaker pattern, preventing cascading failures during service outages and improving system resilience.", "Optimized performance by integrating Redis for in-memory caching to reduce response latency, with Kafka enabling asynchronous, decoupled communication between services.", "Containerized with Docker and orchestrated via Kubernetes; deployed on AWS with API Gateway and Load Balancing for scalability under variable traffic." ]
+  }, {
+    "name" : "ResolveAI — AI-Powered Customer Support Assistant for E-Commerce",
+    "technologies" : "Java, Spring Boot, Spring AI, RAG",
+    "url" : "https://github.com/logic-coders/ResolveAI",
+    "bullets" : [ "Building a pluggable, RAG-based customer support agent using Spring AI, designed to integrate with any e-commerce platform via API to resolve queries like order status, refunds, and product info.", "Implementing persistent memory across sessions so the assistant recalls a user's order history and prior conversations.", "Designing schema-validated guardrails to prevent hallucinated order details, prices, or policy information from reaching the customer.", "Addressing context-loss in long conversations by combining a recency-based window with vector-retrieved history, moving beyond plain summarization." ]
+  }, {
+    "name" : "ABHYAS Test Application",
+    "technologies" : "TypeScript, RAG, AWS, MongoDB, Redis, Docker",
+    "url" : "https://github.com/logic-coders/ABHYAS",
+    "bullets" : [ "Built an AI-powered test-preparation platform for competitive government exam aspirants, enabling unlimited mock test practice across three formats — Previous Year Papers, AI-Generated Practice Tests, and Daily Quizzes.", "Implemented a RAG-based test generation engine that analyzes previous-year exam patterns and difficulty distribution to auto-generate contextually relevant practice tests and daily quizzes.", "Designed role-based, customizable test series (e.g., Teacher Eligibility, GATE) with secure user authentication, using MongoDB for flexible exam and question data modeling.", "Integrated Redis caching to optimize retrieval of test series and previous-year papers, significantly reducing load times and improving response consistency under scale.", "Built an admin panel enabling one-click generation and management of practice test series across exam categories and difficulty levels." ]
+  } ],
+  "education" : [ {
+    "institution" : "Motihari College of Engineering, Motihari",
+    "degree" : "B.Tech",
+    "field" : "Computer Science and Engineering (CSE)",
+    "startDate" : "Oct 2020",
+    "endDate" : "Aug 2024",
+    "gpa" : "9.0 / 10"
+  } ],
+  "certifications" : [ "Claude Certified Developer - Foundations", "Microsoft Certified: Azure AI Engineer Associate" ],
+  "achievements" : [ "Solved 1000+ algorithmic problems across LeetCode and GeeksForGeeks; strong depth in Graphs, Trees, Dynamic Programming, Greedy, and Backtracking.", "Global Rank 14 in CodeChef Starters 67 among 10,000+ participants — top 0.014% globally.", "Founded and scaled ZERO ONE Coding Club to 1,000+ active members, mentoring in competitive programming and system design." ]
+}

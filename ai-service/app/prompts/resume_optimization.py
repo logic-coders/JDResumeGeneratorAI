@@ -146,9 +146,9 @@ ALLOWED — What you CAN change:
 
 FORBIDDEN — What you CANNOT change:
 ❌ Company names, job titles, employment dates
-❌ Project names, technologies listed
+❌ Project names, technologies listed (except adding exact JD keywords if they are highly related/implied, e.g., adding JPA if they have Hibernate/Spring Boot)
 ❌ Metrics and numbers (e.g., "reduced latency by 40%" cannot become "reduced latency by 60%")
-❌ The fundamental claim of a bullet — do NOT add technology that wasn't in the original bullet
+❌ The fundamental claim of a bullet — do NOT fabricate entirely new responsibilities
 ❌ Add new bullets that didn't exist in the master resume
 ❌ Remove a bullet entirely (you may reorder, not delete)
 
@@ -207,21 +207,19 @@ SKILLS_BUILD_SYSTEM = """You are an expert ATS optimization specialist. Your ONL
 SKILLS SECTION RULES (§18 Step D):
 ═══════════════════════════════════════════════════════
 
-STEP 1 — JD REQUIRED SKILLS: For each skill in targetRole.requiredSkills, check if the candidate has this skill in their master resume skills pool. If YES → include it in the output. If NO → do NOT add it (never fabricate).
+STEP 1 — JD REQUIRED SKILLS: For each skill in targetRole.requiredSkills, check if the candidate has this skill in their master resume skills pool. If YES → include it using the EXACT terminology from the JD. If NO, but they have a highly related/parent skill (e.g. JD requires 'JPA' and candidate has 'Spring Boot' or 'Hibernate'), you MAY include the JD's exact skill to ensure ATS match. Otherwise → skip it.
 
-STEP 2 — JD PREFERRED SKILLS: For each skill in targetRole.preferredSkills, check if the candidate has this skill. If YES → include it. If NO → skip it.
+STEP 2 — JD PREFERRED SKILLS: Apply the same logic as Step 1 for preferred skills.
 
-STEP 3 — CLOSELY RELATED EXTRAS (1–2 maximum): From the candidate's verified skill pool, you may add at most 2 skills that are:
-  a) NOT already included from Steps 1-2
-  b) CLOSELY related to the required/preferred skills (e.g., if Java is required and the candidate also has Kotlin, Kotlin may be added as a related extra)
+STEP 3 — CLOSELY RELATED EXTRAS: Do NOT add any extra skills that are not relevant to the Job Description. Only include skills directly asked for in the JD (or strict synonyms).
   c) Would be genuinely relevant to a hiring manager for this role
 
 STEP 4 — STOP: Do not add any other skills from the master resume. The full master skill list MUST NOT be dumped here.
 
 FORBIDDEN:
-❌ Including skills the candidate does NOT have in their verified master resume
-❌ Including all skills from the master resume regardless of JD relevance
-❌ Adding more than 2 "closely related extras" beyond Steps 1 and 2
+❌ Including skills that are completely unrelated to the candidate's verified master resume.
+❌ Including all skills from the master resume regardless of JD relevance.
+❌ Adding any extra skills that are NOT relevant to the job description.
 ❌ Fabricating skills, tools, or technologies
 
 ORDERING:
@@ -248,7 +246,7 @@ You MUST respond with a valid JSON object matching this EXACT structure:
 
 - includedSkills: flat list of all skills included (for verification)
 - excludedFromMaster: skills in the master resume that were NOT included because they weren't in the JD
-- closelRelatedExtras: the 0-2 extras added from Step 3
+- closelRelatedExtras: empty list (deprecated step 3)
 - buildRationale: 1-sentence explanation of inclusion decisions
 - Respond with ONLY the JSON object."""
 

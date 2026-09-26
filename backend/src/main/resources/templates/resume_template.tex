@@ -28,6 +28,7 @@
 \usepackage{lastpage}
 \usepackage{fancyhdr}
 \usepackage{microtype}
+\usepackage{needspace}
 
 % Custom Colors
 \definecolor{primaryColor}{RGB}{0, 79, 144}
@@ -41,16 +42,15 @@
 
 % Sections formatting
 \titleformat{\section}{\Large\bfseries\color{primaryColor}}{}{0em}{}[\titlerule]
-\titlespacing*{\section}{0pt}{8pt}{8pt}
+\titlespacing*{\section}{0pt}{8pt}{6pt}
 
 % Custom commands
 \newcommand{\resumeItem}[1]{
-  \item\small{
-    {#1 \vspace{-2pt}}
-  }
+  \item\small{#1}
 }
 
 \newcommand{\resumeSubheading}[4]{
+  \needspace{6cm}
   \vspace{-2pt}\item
     \begin{tabular*}{1.0\textwidth}[t]{@{}l@{\extracolsep{\fill}}r@{}}
       \textbf{\large #1} & \small #2 \\
@@ -59,6 +59,7 @@
 }
 
 \newcommand{\resumeProjectHeading}[4]{
+  \needspace{6cm}
   \vspace{-2pt}\item
     \begin{tabular*}{1.0\textwidth}[t]{@{}l@{\extracolsep{\fill}}r@{}}
       \textbf{\large #1} & \small #2 \\
@@ -70,12 +71,13 @@
 \renewcommand\labelitemii{$\vcenter{\hbox{\tiny$\bullet$}}$}
 \newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0.0in, label={}]}
 \newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
-\newcommand{\resumeItemListStart}{\begin{itemize}[leftmargin=0.5cm]}
+\newcommand{\resumeItemListStart}{\begin{itemize}[leftmargin=0.5cm, itemsep=0pt, parsep=0pt, topsep=2pt]\interlinepenalty=10000}
 \newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-2pt}}
 \newcommand{\resumeAchievementListStart}{\begin{itemize}[leftmargin=0.5cm, itemsep=-2pt]}
 \newcommand{\resumeAchievementListEnd}{\end{itemize}\vspace{-2pt}}
 
 \pagestyle{empty} % No headers/footers
+\raggedbottom  % Don't stretch vertical space to fill pages
 
 \begin{document}
 

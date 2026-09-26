@@ -96,7 +96,12 @@ public class LatexTemplateRenderer {
                     escapeLatex(job.getLocation())
             ));
             
-            List<String> validBullets = job.getBullets() != null ? job.getBullets().stream().filter(b -> b != null && !b.isBlank()).toList() : List.of();
+            List<String> validBullets = job.getBullets() != null 
+                    ? job.getBullets().stream()
+                        .filter(b -> b != null && !b.strip().isEmpty())
+                        .map(String::strip)
+                        .toList() 
+                    : List.of();
             if (!validBullets.isEmpty()) {
                 sb.append("    \\resumeItemListStart\n");
                 for (String desc : validBullets) {
@@ -104,7 +109,6 @@ public class LatexTemplateRenderer {
                 }
                 sb.append("    \\resumeItemListEnd\n");
             }
-            sb.append("  \\vspace{3pt}\n");
         }
         sb.append("\\resumeSubHeadingListEnd\n");
         return sb.toString();
@@ -124,7 +128,12 @@ public class LatexTemplateRenderer {
                     titleWithLink, "", tech, ""
             ));
             
-            List<String> validBullets = proj.getBullets() != null ? proj.getBullets().stream().filter(b -> b != null && !b.isBlank()).toList() : List.of();
+            List<String> validBullets = proj.getBullets() != null 
+                    ? proj.getBullets().stream()
+                        .filter(b -> b != null && !b.strip().isEmpty())
+                        .map(String::strip)
+                        .toList() 
+                    : List.of();
             if (!validBullets.isEmpty()) {
                 sb.append("    \\resumeItemListStart\n");
                 for (String desc : validBullets) {
@@ -132,7 +141,6 @@ public class LatexTemplateRenderer {
                 }
                 sb.append("    \\resumeItemListEnd\n");
             }
-            sb.append("  \\vspace{3pt}\n");
         }
         sb.append("\\resumeSubHeadingListEnd\n");
         return sb.toString();

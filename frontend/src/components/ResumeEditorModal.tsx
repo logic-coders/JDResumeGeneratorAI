@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import {
   X, Plus, Trash2, ChevronDown, ChevronUp, Save,
   Briefcase, Code2, Wrench, GraduationCap, Award,
   Star, FileText, Check, Loader2, GripVertical, Edit3,
-  Eye, EyeOff, Download
+  Eye, EyeOff, Download, ArrowUp, ArrowDown
 } from 'lucide-react';
 import * as api from '../lib/api';
 import type { Resume, Experience, Project, Education, Skills } from '../lib/types';
@@ -101,6 +101,49 @@ export default function ResumeEditorModal({ isOpen, onClose }: Props) {
       showToast('Save failed — check connection', false);
     } finally {
       setSaving(null);
+    }
+  };
+
+  // ── Drag-and-drop reorder state ──────────────────────────────
+  const [dragState, setDragState] = useState<{ section: string; dragIdx: number; overIdx: number } | null>(null);
+
+  const reorderArray = <T,>(arr: T[], from: number, to: number): T[] => {
+    const result = [...arr];
+    const [moved] = result.splice(from, 1);
+    result.splice(to, 0, moved);
+    return result;
+  };
+
+  const moveItem = (field: 'experience' | 'projects' | 'education', from: number, to: number) => {
+    if (from === to) return;
+    setResume(r => ({ ...r, [field]: reorderArray(r[field] as any[], from, to) }));
+  };
+
+  const handleDragStart = (section: string, idx: number) => (e: React.DragEvent) => {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', String(idx));
+    setDragState({ section, dragIdx: idx, overIdx: idx });
+    // Make the drag image slightly transparent
+    if (e.currentTarget instanceof HTMLElement) {
+      e.currentTarget.style.opacity = '0.5';
+    }
+  };
+
+  const handleDragEnd = (section: string, field: 'experience' | 'projects' | 'education') => (e: React.DragEvent) => {
+    if (e.currentTarget instanceof HTMLElement) {
+      e.currentTarget.style.opacity = '1';
+    }
+    if (dragState && dragState.section === section && dragState.dragIdx !== dragState.overIdx) {
+      moveItem(field, dragState.dragIdx, dragState.overIdx);
+    }
+    setDragState(null);
+  };
+
+  const handleDragOver = (section: string, idx: number) => (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragState && dragState.section === section) {
+      setDragState(prev => prev ? { ...prev, overIdx: idx } : null);
     }
   };
 
@@ -327,34 +370,60 @@ export default function ResumeEditorModal({ isOpen, onClose }: Props) {
 
                 {/* ── EXPERIENCE ─────────────────────────────── */}
                 {section === 'experience' && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                     {resume.experience?.map((exp, ei) => (
-                      <ExpCard key={ei}>
-                        <CardHeader
-                          title={exp.company || `Experience ${ei + 1}`}
-                          subtitle={exp.title}
-                          onDelete={() => delExp(ei)}
-                        />
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
-                          <Field label="Company"    value={exp.company    || ''} onChange={v => updExp(ei, { company: v })}    placeholder="Google" />
-                          <Field label="Job Title"  value={exp.title      || ''} onChange={v => updExp(ei, { title: v })}      placeholder="Software Engineer" />
-                          <Field label="Location"   value={exp.location   || ''} onChange={v => updExp(ei, { location: v })}   placeholder="Bangalore, India" />
-                          <Field label="Start Date" value={exp.startDate  || ''} onChange={v => updExp(ei, { startDate: v })}  placeholder="Jan 2023" />
-                          <Field label="End Date"   value={exp.endDate    || ''} onChange={v => updExp(ei, { endDate: v })}    placeholder="Present" />
-                        </div>
-                        <Label>Bullet Points</Label>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                          {exp.bullets.map((b, bi) => (
-                            <BulletRow
-                              key={bi}
-                              value={b}
-                              onChange={v => updExpBullet(ei, bi, v)}
-                              onDelete={() => delExpBullet(ei, bi)}
+                      <React.Fragment key={ei}>
+                        {/* Drop indicator line */}
+                        {dragState?.section === 'experience' && dragState.overIdx === ei && dragState.dragIdx !== ei && dragState.dragIdx > ei && (
+                          <div style={{ height: 3, borderRadius: 2, background: 'linear-gradient(90deg, #10a37f, #3b82f6)', margin: '2px 0', boxShadow: '0 0 8px #10a37f66', transition: 'all 0.15s' }} />
+                        )}
+                        <div
+                          draggable
+                          onDragStart={handleDragStart('experience', ei)}
+                          onDragEnd={handleDragEnd('experience', 'experience')}
+                          onDragOver={handleDragOver('experience', ei)}
+                          style={{
+                            opacity: dragState?.section === 'experience' && dragState.dragIdx === ei ? 0.4 : 1,
+                            transition: 'opacity 0.2s, transform 0.2s',
+                            transform: dragState?.section === 'experience' && dragState.overIdx === ei && dragState.dragIdx !== ei ? 'scale(1.01)' : 'scale(1)',
+                          }}
+                        >
+                          <ExpCard>
+                            <CardHeader
+                              title={exp.company || `Experience ${ei + 1}`}
+                              subtitle={exp.title}
+                              onDelete={() => delExp(ei)}
+                              index={ei}
+                              total={resume.experience.length}
+                              onMoveUp={ei > 0 ? () => moveItem('experience', ei, ei - 1) : undefined}
+                              onMoveDown={ei < resume.experience.length - 1 ? () => moveItem('experience', ei, ei + 1) : undefined}
                             />
-                          ))}
-                          <AddBtn onClick={() => addExpBullet(ei)} label="Add bullet point" />
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
+                              <Field label="Company"    value={exp.company    || ''} onChange={v => updExp(ei, { company: v })}    placeholder="Google" />
+                              <Field label="Job Title"  value={exp.title      || ''} onChange={v => updExp(ei, { title: v })}      placeholder="Software Engineer" />
+                              <Field label="Location"   value={exp.location   || ''} onChange={v => updExp(ei, { location: v })}   placeholder="Bangalore, India" />
+                              <Field label="Start Date" value={exp.startDate  || ''} onChange={v => updExp(ei, { startDate: v })}  placeholder="Jan 2023" />
+                              <Field label="End Date"   value={exp.endDate    || ''} onChange={v => updExp(ei, { endDate: v })}    placeholder="Present" />
+                            </div>
+                            <Label>Bullet Points</Label>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                              {exp.bullets.map((b, bi) => (
+                                <BulletRow
+                                  key={bi}
+                                  value={b}
+                                  onChange={v => updExpBullet(ei, bi, v)}
+                                  onDelete={() => delExpBullet(ei, bi)}
+                                />
+                              ))}
+                              <AddBtn onClick={() => addExpBullet(ei)} label="Add bullet point" />
+                            </div>
+                          </ExpCard>
                         </div>
-                      </ExpCard>
+                        {/* Drop indicator after last item */}
+                        {dragState?.section === 'experience' && dragState.overIdx === ei && dragState.dragIdx !== ei && dragState.dragIdx < ei && (
+                          <div style={{ height: 3, borderRadius: 2, background: 'linear-gradient(90deg, #10a37f, #3b82f6)', margin: '2px 0', boxShadow: '0 0 8px #10a37f66', transition: 'all 0.15s' }} />
+                        )}
+                      </React.Fragment>
                     ))}
                     <AddCardBtn onClick={() => setResume(r => ({ ...r, experience: [...r.experience, emptyExp()] }))} label="+ Add Experience" />
                   </div>
@@ -362,32 +431,56 @@ export default function ResumeEditorModal({ isOpen, onClose }: Props) {
 
                 {/* ── PROJECTS ───────────────────────────────── */}
                 {section === 'projects' && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                     {resume.projects?.map((proj, pi) => (
-                      <ExpCard key={pi}>
-                        <CardHeader
-                          title={proj.name || `Project ${pi + 1}`}
-                          subtitle={proj.technologies}
-                          onDelete={() => delProj(pi)}
-                        />
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
-                          <Field label="Project Name"  value={proj.name         || ''} onChange={v => updProj(pi, { name: v })}         placeholder="AI Resume Agent" />
-                          <Field label="Technologies"  value={proj.technologies || ''} onChange={v => updProj(pi, { technologies: v })} placeholder="Java, Spring Boot, React" />
-                          <Field label="URL (optional)" value={proj.url          || ''} onChange={v => updProj(pi, { url: v })}          placeholder="github.com/you/project" />
-                        </div>
-                        <Label>Bullet Points</Label>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                          {proj.bullets.map((b, bi) => (
-                            <BulletRow
-                              key={bi}
-                              value={b}
-                              onChange={v => updProjBullet(pi, bi, v)}
-                              onDelete={() => delProjBullet(pi, bi)}
+                      <React.Fragment key={pi}>
+                        {dragState?.section === 'projects' && dragState.overIdx === pi && dragState.dragIdx !== pi && dragState.dragIdx > pi && (
+                          <div style={{ height: 3, borderRadius: 2, background: 'linear-gradient(90deg, #10a37f, #3b82f6)', margin: '2px 0', boxShadow: '0 0 8px #10a37f66', transition: 'all 0.15s' }} />
+                        )}
+                        <div
+                          draggable
+                          onDragStart={handleDragStart('projects', pi)}
+                          onDragEnd={handleDragEnd('projects', 'projects')}
+                          onDragOver={handleDragOver('projects', pi)}
+                          style={{
+                            opacity: dragState?.section === 'projects' && dragState.dragIdx === pi ? 0.4 : 1,
+                            transition: 'opacity 0.2s, transform 0.2s',
+                            transform: dragState?.section === 'projects' && dragState.overIdx === pi && dragState.dragIdx !== pi ? 'scale(1.01)' : 'scale(1)',
+                          }}
+                        >
+                          <ExpCard>
+                            <CardHeader
+                              title={proj.name || `Project ${pi + 1}`}
+                              subtitle={proj.technologies}
+                              onDelete={() => delProj(pi)}
+                              index={pi}
+                              total={resume.projects.length}
+                              onMoveUp={pi > 0 ? () => moveItem('projects', pi, pi - 1) : undefined}
+                              onMoveDown={pi < resume.projects.length - 1 ? () => moveItem('projects', pi, pi + 1) : undefined}
                             />
-                          ))}
-                          <AddBtn onClick={() => addProjBullet(pi)} label="Add bullet point" />
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
+                              <Field label="Project Name"  value={proj.name         || ''} onChange={v => updProj(pi, { name: v })}         placeholder="AI Resume Agent" />
+                              <Field label="Technologies"  value={proj.technologies || ''} onChange={v => updProj(pi, { technologies: v })} placeholder="Java, Spring Boot, React" />
+                              <Field label="URL (optional)" value={proj.url          || ''} onChange={v => updProj(pi, { url: v })}          placeholder="github.com/you/project" />
+                            </div>
+                            <Label>Bullet Points</Label>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                              {proj.bullets.map((b, bi) => (
+                                <BulletRow
+                                  key={bi}
+                                  value={b}
+                                  onChange={v => updProjBullet(pi, bi, v)}
+                                  onDelete={() => delProjBullet(pi, bi)}
+                                />
+                              ))}
+                              <AddBtn onClick={() => addProjBullet(pi)} label="Add bullet point" />
+                            </div>
+                          </ExpCard>
                         </div>
-                      </ExpCard>
+                        {dragState?.section === 'projects' && dragState.overIdx === pi && dragState.dragIdx !== pi && dragState.dragIdx < pi && (
+                          <div style={{ height: 3, borderRadius: 2, background: 'linear-gradient(90deg, #10a37f, #3b82f6)', margin: '2px 0', boxShadow: '0 0 8px #10a37f66', transition: 'all 0.15s' }} />
+                        )}
+                      </React.Fragment>
                     ))}
                     <AddCardBtn onClick={() => setResume(r => ({ ...r, projects: [...r.projects, emptyProj()] }))} label="+ Add Project" />
                   </div>
@@ -409,23 +502,47 @@ export default function ResumeEditorModal({ isOpen, onClose }: Props) {
 
                 {/* ── EDUCATION ──────────────────────────────── */}
                 {section === 'education' && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                     {resume.education?.map((edu, ei) => (
-                      <ExpCard key={ei}>
-                        <CardHeader
-                          title={edu.institution || `Education ${ei + 1}`}
-                          subtitle={edu.degree}
-                          onDelete={() => delEdu(ei)}
-                        />
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                          <Field label="Institution" value={edu.institution || ''} onChange={v => updEdu(ei, { institution: v })} placeholder="IIT Bombay" />
-                          <Field label="Degree"      value={edu.degree      || ''} onChange={v => updEdu(ei, { degree: v })}      placeholder="B.Tech" />
-                          <Field label="Field"       value={edu.field       || ''} onChange={v => updEdu(ei, { field: v })}       placeholder="Computer Science" />
-                          <Field label="GPA"         value={edu.gpa         || ''} onChange={v => updEdu(ei, { gpa: v })}         placeholder="8.5 / 10" />
-                          <Field label="Start Date"  value={edu.startDate   || ''} onChange={v => updEdu(ei, { startDate: v })}   placeholder="2019" />
-                          <Field label="End Date"    value={edu.endDate     || ''} onChange={v => updEdu(ei, { endDate: v })}     placeholder="2023" />
+                      <React.Fragment key={ei}>
+                        {dragState?.section === 'education' && dragState.overIdx === ei && dragState.dragIdx !== ei && dragState.dragIdx > ei && (
+                          <div style={{ height: 3, borderRadius: 2, background: 'linear-gradient(90deg, #10a37f, #3b82f6)', margin: '2px 0', boxShadow: '0 0 8px #10a37f66', transition: 'all 0.15s' }} />
+                        )}
+                        <div
+                          draggable
+                          onDragStart={handleDragStart('education', ei)}
+                          onDragEnd={handleDragEnd('education', 'education')}
+                          onDragOver={handleDragOver('education', ei)}
+                          style={{
+                            opacity: dragState?.section === 'education' && dragState.dragIdx === ei ? 0.4 : 1,
+                            transition: 'opacity 0.2s, transform 0.2s',
+                            transform: dragState?.section === 'education' && dragState.overIdx === ei && dragState.dragIdx !== ei ? 'scale(1.01)' : 'scale(1)',
+                          }}
+                        >
+                          <ExpCard>
+                            <CardHeader
+                              title={edu.institution || `Education ${ei + 1}`}
+                              subtitle={edu.degree}
+                              onDelete={() => delEdu(ei)}
+                              index={ei}
+                              total={resume.education.length}
+                              onMoveUp={ei > 0 ? () => moveItem('education', ei, ei - 1) : undefined}
+                              onMoveDown={ei < resume.education.length - 1 ? () => moveItem('education', ei, ei + 1) : undefined}
+                            />
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                              <Field label="Institution" value={edu.institution || ''} onChange={v => updEdu(ei, { institution: v })} placeholder="IIT Bombay" />
+                              <Field label="Degree"      value={edu.degree      || ''} onChange={v => updEdu(ei, { degree: v })}      placeholder="B.Tech" />
+                              <Field label="Field"       value={edu.field       || ''} onChange={v => updEdu(ei, { field: v })}       placeholder="Computer Science" />
+                              <Field label="GPA"         value={edu.gpa         || ''} onChange={v => updEdu(ei, { gpa: v })}         placeholder="8.5 / 10" />
+                              <Field label="Start Date"  value={edu.startDate   || ''} onChange={v => updEdu(ei, { startDate: v })}   placeholder="2019" />
+                              <Field label="End Date"    value={edu.endDate     || ''} onChange={v => updEdu(ei, { endDate: v })}     placeholder="2023" />
+                            </div>
+                          </ExpCard>
                         </div>
-                      </ExpCard>
+                        {dragState?.section === 'education' && dragState.overIdx === ei && dragState.dragIdx !== ei && dragState.dragIdx < ei && (
+                          <div style={{ height: 3, borderRadius: 2, background: 'linear-gradient(90deg, #10a37f, #3b82f6)', margin: '2px 0', boxShadow: '0 0 8px #10a37f66', transition: 'all 0.15s' }} />
+                        )}
+                      </React.Fragment>
                     ))}
                     <AddCardBtn onClick={() => setResume(r => ({ ...r, education: [...r.education, emptyEdu()] }))} label="+ Add Education" />
                   </div>
@@ -543,19 +660,84 @@ function ExpCard({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
-function CardHeader({ title, subtitle, onDelete }: { title: string; subtitle?: string; onDelete: () => void }) {
+function CardHeader({ title, subtitle, onDelete, index, total, onMoveUp, onMoveDown }: {
+  title: string; subtitle?: string; onDelete: () => void;
+  index?: number; total?: number;
+  onMoveUp?: () => void; onMoveDown?: () => void;
+}) {
+  const hasReorder = index !== undefined && total !== undefined && total > 1;
   return (
     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14 }}>
-      <div>
-        <div style={{ fontSize: 14, fontWeight: 700, color: 'white' }}>{title}</div>
-        {subtitle && <div style={{ fontSize: 12, color: '#888', marginTop: 1 }}>{subtitle}</div>}
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+        {/* Drag handle + position badge */}
+        {hasReorder && (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, cursor: 'grab', userSelect: 'none', marginTop: 1 }}>
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 26, height: 26, borderRadius: 7,
+              background: 'linear-gradient(135deg, #10a37f22, #3b82f622)',
+              border: '1px solid #10a37f44',
+              fontSize: 12, fontWeight: 800, color: '#10a37f',
+              fontVariantNumeric: 'tabular-nums',
+            }}>
+              {index! + 1}
+            </div>
+            <GripVertical size={14} color="#555" style={{ marginTop: 2 }} />
+          </div>
+        )}
+        <div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: 'white' }}>{title}</div>
+          {subtitle && <div style={{ fontSize: 12, color: '#888', marginTop: 1 }}>{subtitle}</div>}
+        </div>
       </div>
-      <button
-        onClick={onDelete}
-        style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 6, background: 'transparent', border: '1px solid #f8717133', color: '#f87171', cursor: 'pointer', fontSize: 12 }}
-      >
-        <Trash2 size={12} /> Remove
-      </button>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }} draggable={false} onMouseDown={e => e.stopPropagation()} onDragStart={e => e.stopPropagation()}>
+        {/* Move up/down buttons */}
+        {hasReorder && (
+          <>
+            <button
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onMoveUp?.(); }}
+              disabled={!onMoveUp}
+              draggable={false}
+              title="Move up"
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: 28, height: 28, borderRadius: 6,
+                background: onMoveUp ? '#2a2a2a' : 'transparent',
+                border: onMoveUp ? '1px solid #444' : '1px solid #2a2a2a',
+                color: onMoveUp ? '#ccc' : '#333',
+                cursor: onMoveUp ? 'pointer' : 'default',
+                transition: 'all 0.15s',
+              }}
+            >
+              <ArrowUp size={13} />
+            </button>
+            <button
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onMoveDown?.(); }}
+              disabled={!onMoveDown}
+              draggable={false}
+              title="Move down"
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: 28, height: 28, borderRadius: 6,
+                background: onMoveDown ? '#2a2a2a' : 'transparent',
+                border: onMoveDown ? '1px solid #444' : '1px solid #2a2a2a',
+                color: onMoveDown ? '#ccc' : '#333',
+                cursor: onMoveDown ? 'pointer' : 'default',
+                transition: 'all 0.15s',
+              }}
+            >
+              <ArrowDown size={13} />
+            </button>
+          </>
+        )}
+        <button
+          onClick={onDelete}
+          draggable={false}
+          style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 6, background: 'transparent', border: '1px solid #f8717133', color: '#f87171', cursor: 'pointer', fontSize: 12 }}
+        >
+          <Trash2 size={12} /> Remove
+        </button>
+      </div>
     </div>
   );
 }
