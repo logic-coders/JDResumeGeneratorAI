@@ -1,0 +1,4 @@
+{
+  "error" : "Failed to parse job description",
+  "raw" : "{\n{\n  \"jobId\": \"\",\n  \"company\": \"Barclays\",\n  \"jobTitle\": \"Software Engineer\",\n  \"location\": \"Pune\",\n  \"description\": \"Join us as a Software Engineer at Barclays, where you'll spearhead the evolution of our digital landscape, driving innovation and excellence. You'll harness cutting-edge technology to revolutionise our digital offerings, ensuring unapparelled customer experiences.\",\n  \"responsibilities\": [\n    \""
+}

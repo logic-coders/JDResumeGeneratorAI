@@ -72,11 +72,12 @@ SELECTION RULES (§18 Step B):
 
 1. SCORE EVERY ENTRY — evaluate ALL experience entries and ALL projects in the master resume against the target role. Do not skip any entry.
 2. RANK BY RELEVANCE — rank entries by how directly they demonstrate the required skills, domain, seniority, and responsibilities from the target role.
-3. SELECT THE TOP SUBSET — pick the highest-scoring entries that fit on a 1-page resume (or 2-page max for senior roles). Drop less relevant entries — do NOT include everything.
-4. NEVER REUSE A PRIOR SELECTION — the selection must be driven solely by the current target role, not assumptions about what was selected before.
-5. NO REWRITING — return the original bullet text verbatim. Rewriting happens in Step C.
-6. NO HALLUCINATION — only select entries that EXIST in the master resume. Do not invent new entries.
-7. INCLUDE AT LEAST ONE PROJECT — always include at least 1 project entry if projects exist in the master resume.
+3. SELECT THE TOP SUBSET — pick the highest-scoring entries that fit STRICTLY on a 1-page resume. Drop less relevant entries — do NOT include everything.
+4. AI SKILLS & CERTIFICATIONS FILTER — If the target role is NOT heavily focused on AI/ML, explicitly skip adding AI-related certifications and AI-specific skills to the selected sets.
+5. NEVER REUSE A PRIOR SELECTION — the selection must be driven solely by the current target role.
+6. NO REWRITING — return the original bullet text verbatim. Rewriting happens in Step C.
+7. NO HALLUCINATION — only select entries that EXIST in the master resume.
+8. INCLUDE AT LEAST ONE PROJECT — always include at least 1 project entry if projects exist.
 
 SCORING CRITERIA per entry:
 - How many required skills does this entry demonstrate?
@@ -106,6 +107,7 @@ You MUST respond with a valid JSON object matching this EXACT structure:
       "bullets": []
     }
   ],
+  "selectedCertifications": [],
   "droppedEntries": []
 }
 
@@ -143,6 +145,7 @@ ALLOWED — What you CAN change:
 ✓ ATS keyword integration — naturally weave in mustHaveKeywords from the target role where they're genuinely accurate
 ✓ Clarity and impact improvements (stronger action verbs, quantified outcomes if already present)
 ✓ Reordering bullets within an entry to surface the most relevant ones first
+✓ Remove a bullet entirely or merge two less relevant bullets into a single concise bullet, to ensure the entire resume fits STRICTLY on 1 PAGE.
 
 FORBIDDEN — What you CANNOT change:
 ❌ Company names, job titles, employment dates
@@ -150,7 +153,6 @@ FORBIDDEN — What you CANNOT change:
 ❌ Metrics and numbers (e.g., "reduced latency by 40%" cannot become "reduced latency by 60%")
 ❌ The fundamental claim of a bullet — do NOT fabricate entirely new responsibilities
 ❌ Add new bullets that didn't exist in the master resume
-❌ Remove a bullet entirely (you may reorder, not delete)
 
 FORMAT:
 - Each bullet should begin with a strong past-tense action verb
@@ -211,7 +213,7 @@ STEP 1 — JD REQUIRED SKILLS: For each skill in targetRole.requiredSkills, chec
 
 STEP 2 — JD PREFERRED SKILLS: Apply the same logic as Step 1 for preferred skills.
 
-STEP 3 — CLOSELY RELATED EXTRAS: Do NOT add any extra skills that are not relevant to the Job Description. Only include skills directly asked for in the JD (or strict synonyms).
+STEP 3 — CLOSELY RELATED EXTRAS: Do NOT add any extra skills that are not relevant to the Job Description. Only include skills directly asked for in the JD (or strict synonyms). If the role is NOT heavily AI-focused, explicitly EXCLUDE all AI-related skills (e.g., LangChain, RAG, Spring AI).
   c) Would be genuinely relevant to a hiring manager for this role
 
 STEP 4 — STOP: Do not add any other skills from the master resume. The full master skill list MUST NOT be dumped here.

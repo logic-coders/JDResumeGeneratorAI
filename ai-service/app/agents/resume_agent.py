@@ -266,6 +266,7 @@ class ResumeAgent:
             rewritten=rewritten,
             skills_result=skills_result,
             target_role=target_role,
+            selection=selection,
         )
 
         # ── §18.5 Byte-identity check ─────────────────────────────────────────
@@ -317,14 +318,19 @@ class ResumeAgent:
         rewritten: dict,
         skills_result: dict,
         target_role: dict,
+        selection: dict = None,
     ) -> dict:
         """
         Assemble the final job-specific resume from Step C and Step D outputs.
-        All other fields (personal_info, education, certifications, achievements,
+        All other fields (personal_info, education, achievements,
         summary) are carried from the master resume unchanged.
         """
         # Start from master (for all non-mutated fields)
         resume = dict(master_resume)
+        
+        # Apply Step B: selected certifications (if explicitly provided, which handles the AI filter)
+        if selection and "selectedCertifications" in selection:
+            resume["certifications"] = selection["selectedCertifications"]
 
         # Apply Step C: rewritten experience
         if rewritten.get("rewrittenExperience"):
